@@ -25,7 +25,7 @@ This guide covers creating front-end applications for Spring Boot using Angular 
 | Tool | Version |
 |------|---------|
 | Node.js | 24.20.0 |
-| npm | 11.19.0 |
+| npm | 11.19.1 |
 | Angular | 22.x |
 | Angular Router | 22.x |
 <!-- versions:end -->
@@ -212,7 +212,7 @@ Add to your `pom.xml`:
                     </goals>
                     <configuration>
                         <nodeVersion>v24.20.0</nodeVersion>
-                        <npmVersion>11.19.0</npmVersion>
+                        <npmVersion>11.19.1</npmVersion>
                     </configuration>
                 </execution>
                 

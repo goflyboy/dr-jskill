@@ -25,6 +25,17 @@ frontend/dist/
 frontend/.vite/
 frontend/.eslintcache
 
+# Front-end build output. Vite / the Angular CLI write into Spring Boot's static
+# folder (`outDir: ../src/main/resources/static`) during `generate-resources`,
+# so everything the bundler emits there is generated, never hand-edited.
+# The placeholder `index.html` shipped for frontend-less projects stays tracked;
+# once you add a frontend/ project the build overwrites it, so add
+# `/src/main/resources/static/index.html` here too if you do not want that diff.
+/src/main/resources/static/assets/
+/src/main/resources/static/*.js
+/src/main/resources/static/*.css
+/src/main/resources/static/*.map
+
 # Testcontainers / Docker
 .testcontainers.properties
 **/.testcontainers/*

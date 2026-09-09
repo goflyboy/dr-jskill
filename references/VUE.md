@@ -25,7 +25,7 @@ This guide covers creating front-end applications for Spring Boot using **Vue.js
 | Tool | Version |
 |------|---------|
 | Node.js | 24.20.0 |
-| npm | 11.19.0 |
+| npm | 11.19.1 |
 | Vue.js | 3.x |
 | Vite | 8.x |
 | Pinia | 4.x |
@@ -116,8 +116,11 @@ npm install bootstrap@5.3.8 bootstrap-icons@1.13.1
 > therefore the **whole Maven build**.
 >
 > **Always run the normalizer immediately after scaffolding**, before the first
-> `npm install`. It drops the oxlint dual-linter and collapses linting to the
-> single ESLint pipeline this project standardizes on (see
+> `npm install`. It drops the oxlint dual-linter, collapses linting to the
+> single ESLint pipeline this project standardizes on, and adds the `lint:check`
+> script `create-vue` never emits — the Maven build runs `npm run lint:check`,
+> so without it the `frontend-maven-plugin` step fails with
+> `Missing script: "lint:check"` (see
 > [step 4](#4-update-frontend-packagejson-scripts)):
 >
 > ```bash
@@ -130,7 +133,8 @@ npm install bootstrap@5.3.8 bootstrap-icons@1.13.1
 >
 > It is idempotent, and `--check` reports without writing (useful in CI). If you
 > ever need to do it by hand: remove `oxlint` and `eslint-plugin-oxlint` from
-> `devDependencies`, delete `frontend/.oxlintrc.json`, and
+> `devDependencies`, delete `frontend/.oxlintrc.json`, add
+> `"lint:check": "eslint ."` to `scripts`, and
 > drop the `eslint-plugin-oxlint` import plus the
 > `...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json')` entry from
 > `frontend/eslint.config.js` (the TypeScript flavour of `create-vue` emits
@@ -251,7 +255,7 @@ Add to your `pom.xml`:
                     </goals>
                     <configuration>
                         <nodeVersion>v24.20.0</nodeVersion>
-                        <npmVersion>11.19.0</npmVersion>
+                        <npmVersion>11.19.1</npmVersion>
                     </configuration>
                 </execution>
                 

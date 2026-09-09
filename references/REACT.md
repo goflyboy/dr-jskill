@@ -25,7 +25,7 @@ This guide covers creating front-end applications for Spring Boot using React 19
 | Tool | Version |
 |------|---------|
 | Node.js | 24.20.0 |
-| npm | 11.19.0 |
+| npm | 11.19.1 |
 | React | 19.x |
 | Vite | 8.x |
 | React Router | 8.x |
@@ -185,7 +185,7 @@ Add to your `pom.xml`:
                     </goals>
                     <configuration>
                         <nodeVersion>v24.20.0</nodeVersion>
-                        <npmVersion>11.19.0</npmVersion>
+                        <npmVersion>11.19.1</npmVersion>
                     </configuration>
                 </execution>
                 

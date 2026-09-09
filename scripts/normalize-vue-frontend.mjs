@@ -63,9 +63,13 @@ function normalizePackageJson(frontendDir, changes, warnings, check) {
         changes.push(`package.json: removed script ${name}`);
       }
     }
+    // Add every canonical script that is missing (create-vue never emits
+    // `lint:check`, which the Maven `frontend-maven-plugin` build relies on),
+    // and rewrite any script still routed through oxlint / npm-run-all2.
     for (const [name, command] of Object.entries(CANONICAL_SCRIPTS)) {
       const current = pkg.scripts[name];
-      if (current !== command && (current === undefined ? name === 'lint' : /oxlint|run-s|run-p/.test(current))) {
+      if (current === command) continue;
+      if (current === undefined || /oxlint|run-s|run-p/.test(current)) {
         pkg.scripts[name] = command;
         changes.push(`package.json: set script ${name} to "${command}"`);
       }

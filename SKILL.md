@@ -241,7 +241,7 @@ When wiring the `frontend-maven-plugin`, bind the Node install, `npm install`, a
 > node scripts/normalize-vue-frontend.mjs /absolute/path/to/my-app/frontend
 > ```
 >
-> It drops the oxlint dual-linter, leaving the single ESLint pipeline. It is idempotent, and `--check` reports without writing. See [Vue.js Guide](references/VUE.md#1-project-setup).
+> It drops the oxlint dual-linter, leaving the single ESLint pipeline, and adds the `lint:check` script that `create-vue` never emits but the Maven `frontend-maven-plugin` build runs. It is idempotent, and `--check` reports without writing. See [Vue.js Guide](references/VUE.md#1-project-setup).
 >
 > **Vitest + callback Vite config.** If `vite.config.js` exports `defineConfig(({ mode }) => ...)`, do not let the generated `vitest.config.js` call `mergeConfig(viteConfig, ...)`. Resolve the callback first with `viteConfig({ mode: 'test', command: 'serve' })`; otherwise Vitest fails with `Cannot merge config in form of callback`. See [Vue.js Guide](references/VUE.md#2-configure-vite-for-spring-boot-integration).
 

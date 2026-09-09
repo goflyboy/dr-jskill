@@ -62,6 +62,12 @@ frontend/dist/
 frontend/.vite/
 frontend/.eslintcache
 
+# Front-end build output (Vite / Angular CLI write into src/main/resources/static)
+/src/main/resources/static/assets/
+/src/main/resources/static/*.js
+/src/main/resources/static/*.css
+/src/main/resources/static/*.map
+
 # Testcontainers / Docker
 .testcontainers.properties
 **/.testcontainers/*
