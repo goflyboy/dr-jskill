@@ -10,7 +10,8 @@
  * `references/`, `SKILL.md` and `versions.json` in the repository, but the
  * docs site only publishes `README.md`, `WORKS-WITH.md` and `workshop/`.
  * Relative links that escape the site are therefore rewritten to absolute
- * GitHub URLs; links that resolve to a real site page are left alone.
+ * GitHub URLs; links that resolve to a real site page remain relative.
+ * Local heading fragments are translated from GitHub to VuePress when needed.
  *
  * Usage:
  *   node scripts/sync-workshop-docs.mjs           # write docs/workshop/
@@ -42,13 +43,47 @@ function isPublishedInDocs(target) {
 }
 
 /**
- * Rewrite `](../<target>)` links that point outside the published docs site.
- * Anchors are preserved: `../references/VUE.md#6-performance` keeps its `#6-performance`.
+ * Rewrite off-site paths to GitHub and local fragments to VuePress heading IDs.
+ * Off-site anchors are preserved: `../references/VUE.md#6-performance` keeps its fragment.
  */
-function rewriteLinks(markdown) {
-  return markdown.replace(/\]\(\.\.\/([^)]*)\)/g, (match, target) =>
+export function rewriteLinks(markdown) {
+  const rewritten = markdown.replace(/\]\(\.\.\/([^)]*)\)/g, (match, target) =>
     isPublishedInDocs(target) ? match : `](${GITHUB_BLOB}/${target})`,
   );
+
+  return rewritten.replace(/\]\((?![a-z][a-z\d+.-]*:|\/|#)([^)#]+\.md)#([^)]*)\)/gi, (match, target, anchor) => {
+    const resolved = resolve(sourceDir, target);
+    if (!existsSync(resolved)) return match; // Report missing files in --check.
+
+    const heading = readHeadings(resolved).find((text) => headingAnchor(text) === anchor);
+    if (!heading) return match; // Report unknown anchors in --check.
+
+    const publishedAnchor = headingAnchor(heading, true);
+    return publishedAnchor === publishedLinkAnchor(anchor) ? match : `](${target}#${publishedAnchor})`;
+  });
+}
+
+function readHeadings(filePath) {
+  return [...readFileSync(filePath, 'utf8').matchAll(/^#{1,6}\s+(.*)$/gm)].map(([, text]) => text);
+}
+
+export function headingAnchor(text, published = false) {
+  if (!published) {
+    return text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+  }
+
+  // Match VuePress's default @mdit-vue/shared slugify without adding script dependencies.
+  return text.normalize('NFKD')
+    .replace(/[\u0300-\u036f\u0000-\u001f]/g, '')
+    .replace(/[\s~`!@#$%^&*()\-_+=[\]{}|\\;:"'\u201c\u201d\u2018\u2019<>,.?/]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/^(\d)/, '_$1')
+    .toLowerCase();
+}
+
+function publishedLinkAnchor(anchor) {
+  // VuePress prefixes numeric fragments when rendering relative Markdown links.
+  return anchor.replace(/^(\d)/, '_$1');
 }
 
 /**
@@ -60,6 +95,7 @@ function rewriteLinks(markdown) {
  */
 function findBrokenLinks(dir) {
   const broken = [];
+  const published = dir === targetDir;
 
   for (const name of readdirSync(dir).filter((f) => f.endsWith('.md'))) {
     const filePath = join(dir, name);
@@ -75,12 +111,9 @@ function findBrokenLinks(dir) {
       }
       if (!anchor || !resolved.endsWith('.md')) continue;
 
-      const headings = [...readFileSync(resolved, 'utf8').matchAll(/^#{1,6}\s+(.*)$/gm)]
-        .map(([, text]) =>
-          text.toLowerCase().replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-'),
-        );
+      const headings = readHeadings(resolved).map((text) => headingAnchor(text, published));
 
-      if (!headings.includes(anchor)) {
+      if (!headings.includes(published ? publishedLinkAnchor(anchor) : anchor)) {
         broken.push(`${filePath} -> ${link} (no such heading)`);
       }
     }
@@ -147,4 +180,4 @@ function main() {
   }
 }
 
-main();
+if (import.meta.main) main();
