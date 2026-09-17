@@ -29,6 +29,9 @@ jobs:
       - name: Verify published workshop is in sync with workshop/
         run: node scripts/sync-workshop-docs.mjs --check
 
+      - name: Test workshop link synchronization
+        run: node --test scripts/sync-workshop-docs.test.mjs
+
       - name: Syntax-check scripts
         run: |
           for f in scripts/*.mjs scripts/lib/*.mjs; do

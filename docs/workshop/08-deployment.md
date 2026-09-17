@@ -142,7 +142,7 @@ docker inspect todo-app:latest --format '{{.Config.Env}}'
 > **Build fails downloading Node or npm with an SSL/TLS handshake error?** You are almost
 > certainly behind a corporate proxy or VPN: your host can reach the npm registry but the
 > container cannot. See
-> [Appendix B → "Docker build fails downloading Node/npm"](appendix-b-troubleshooting.md#docker-build-fails-downloading-nodenpm-ssl-peer-shut-down-incorrectly).
+> [Appendix B → "Docker build fails downloading Node/npm"](appendix-b-troubleshooting.md#docker-build-fails-downloading-node-npm-ssl-peer-shut-down-incorrectly).
 
 > **No shell in the image?** That's deliberate. To debug a running distroless container, attach a temporary sidecar that shares its process namespace — see "Debugging a distroless image" in [`references/DOCKER.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DOCKER.md).
 
