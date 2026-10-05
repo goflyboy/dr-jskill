@@ -136,7 +136,7 @@ If any behavior is off, stop the app (Ctrl+C) and give the agent another follow-
 While the app is running, in a new terminal:
 
 ```bash
-docker compose -f compose.yaml exec postgres psql -U user -d mydb
+docker compose -f compose.yaml exec mysql mysql -U user -d mydb
 ```
 
 > **Why `-f compose.yaml`?** Your project ships two Compose files — `compose.yaml` (the dev
@@ -145,7 +145,7 @@ docker compose -f compose.yaml exec postgres psql -U user -d mydb
 > both and warns `Found multiple config files ...` before picking `compose.yaml`. Naming the
 > file keeps it unambiguous.
 
-At the `psql` prompt:
+At the `mysql` prompt:
 
 ```sql
 \dt               -- list tables: todo, app_user (or similar)

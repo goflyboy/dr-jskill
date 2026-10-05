@@ -29,9 +29,9 @@ Think of it as a "senior engineer's checklist" that travels with the agent.
 
 When you ask the agent to "create a new Spring Boot app", Dr JSkill tells it:
 
-- Use **Spring Boot 4.x** with **Java 25**
+- Use **Spring Boot 3.x** with **Java 21**
 - Use **Maven** (not Gradle), **Hibernate `ddl-auto`** (not Flyway/Liquibase)
-- Use **PostgreSQL** in Docker for development
+- Use **MySQL** in Docker for development
 - Wire a front-end (Vue, React, Angular, or vanilla JS) through the **Maven Frontend Plugin** so `./mvnw package` builds the whole thing
 - Ship sensible defaults: `.gitignore`, `.editorconfig`, `.env.sample`, a `Dockerfile`, a `compose.yaml`, CI config, etc.
 - **Avoid** a specific list of things the author considers traps: Lombok, Gradle, OpenAPI/springdoc scaffolding, buildpacks, Jib

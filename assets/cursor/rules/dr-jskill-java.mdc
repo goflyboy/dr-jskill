@@ -1,0 +1,47 @@
+---
+# Dr JSkill — generated project conventions
+#
+# Auto-loaded by Cursor for every AI agent working in this repository.
+# Codex reads the sibling AGENTS.md at the repo root instead.
+
+## Java code intelligence
+
+This project ships JDTLS. For any Java task prefer semantic tools over text search:
+
+| Task | Tool |
+|------|-----|
+| Find a class or method definition | go to definition |
+| Find callers before changing a signature | find references |
+| Look up types, parameters, Javadoc | hover |
+| List symbols in a file | document symbols |
+| Rename safely across files | rename (never sed) |
+| Check compile errors before `./mvnw verify` | diagnostics |
+
+**Preference order for Java work: language server → grep with a `.java` glob → read the file.**
+
+## Stack
+
+- Java 21 (records and sealed types are preferred over Lombok)
+- Spring Boot 3.x, Maven only (no Gradle)
+- MySQL at runtime; H2 (`test` scope) for fast, container-free unit tests
+- `spring.jpa.hibernate.ddl-auto` is the only supported schema mechanism
+- No Liquibase, no Flyway, no OpenAPI/springdoc, no Jib, no Buildpacks
+
+## Ground rules
+
+- Plain Java 21 records and explicit accessors — **do not add Lombok** unless the
+  build is run with `-Plombok` (an opt-in profile ships in `pom.xml`).
+- Maven is the only build tool.
+- Use `.properties` files, never YAML, for application configuration.
+- Secrets live in `.env`, which is gitignored. **Never read, print, or commit `.env`.**
+  Only `.env.sample` (placeholders) may be displayed.
+- Ask before running any git command, and before creating a commit.
+
+## Validation
+
+Run these before considering a change complete:
+
+1. `./mvnw clean install`
+2. `./mvnw test` (must stay container-free)
+3. `./mvnw verify` (runs the Testcontainers-backed `*IT` tests)
+4. `cd frontend && npm run build` when a frontend is present

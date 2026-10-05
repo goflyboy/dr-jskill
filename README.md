@@ -4,7 +4,7 @@
   <tr>
     <td>
       <p><strong>An Agent Skill for creating Spring Boot applications following Julien Dubois' best practices.</strong></p>
-      <p>Generate Spring Boot 4.x projects with Java 25, PostgreSQL, Docker support, and your choice of front-end framework (Vue.js, React, Angular, or Vanilla JS).</p>
+      <p>Generate Spring Boot 3.x projects with Java 21, MySQL, Docker support, and your choice of front-end framework (Vue.js, React, Angular, or Vanilla JS).</p>
       <p>Dr JSkill is an agent skill: it is meant to work with tools like GitHub Copliot CLI or Claude Code.
       </p>
     </td>
@@ -25,7 +25,7 @@
 - **Automated project generation** from https://start.spring.io with the latest available Spring Boot version
 - **Docker-ready** applications with standard and native image builds
 - **Multiple front-end options**: Vue.js (default), React, Angular, or Vanilla JS
-- **Production-ready** configurations with PostgreSQL, REST APIs, and monitoring
+- **Production-ready** configurations with MySQL, REST APIs, and monitoring
 
 ## Comparison with JHipster
 
@@ -159,8 +159,8 @@ This skill follows the [Agent Skills specification](https://agentskills.io/speci
 
 ## Requirements
 
-- Node.js 24.x and npm 11.x
-- Java 25
+- Node.js 22.x and npm 11.x
+- Java 21
 - Docker (for containerized deployments)
 
 ## License

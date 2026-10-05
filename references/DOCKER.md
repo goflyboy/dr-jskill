@@ -21,9 +21,9 @@
 
 ## Overview
 
-This guide covers Docker deployment for Spring Boot 4 applications. It ships **four**
+This guide covers Docker deployment for Spring Boot 3 applications. It ships **four**
 container images, each tuned for a different startup/footprint trade-off, plus the
-Docker Compose files that wire them to PostgreSQL.
+Docker Compose files that wire them to MySQL.
 
 | File | What it is |
 | ---- | ---------- |
@@ -32,14 +32,14 @@ Docker Compose files that wire them to PostgreSQL.
 | `Dockerfile-crac` | **CRaC** (Coordinated Restore at Checkpoint), restores in tens of ms |
 | `Dockerfile-native` | **GraalVM** native image, sub-second startup, smallest compressed image |
 
-**Spring Boot 4 requirements:**
+**Spring Boot 3 requirements:**
 
-1. Java 17+ (Java 25 is used in the JVM/AOT/native images here).
-2. GraalVM 25+ for native images.
+1. Java 17+ (Java 21 is used in the JVM/AOT/native images here).
+2. GraalVM 21+ for native images.
 3. A CRaC-enabled LTS JDK for the CRaC image (BellSoft Liberica **JDK 21** — CRaC is
    only published for LTS releases).
 4. Jakarta EE 11 / Servlet 6.1 baseline.
-5. PostgreSQL (`postgres:18-alpine`).
+5. MySQL (`mysql:8.3.0`).
 
 **Techniques shared by these images:**
 
@@ -55,7 +55,7 @@ Docker Compose files that wire them to PostgreSQL.
    `nonroot` user (uid 65532).
 5. **Container-aware JVM flags** passed via `JAVA_TOOL_OPTIONS` (no shell to split a
    `JAVA_OPTS` string), with G1GC, string deduplication, compact object headers
-   (a JDK 25 product feature) and fail-fast heap dumps.
+   (a JDK 21 product feature) and fail-fast heap dumps.
 6. ❌ **No Buildpacks / Jib** — stick to the provided Dockerfiles and Compose files.
 
 > **Distroless implications.** Because the JVM/AOT/native runtime images have no
@@ -73,14 +73,14 @@ Docker Compose files that wire them to PostgreSQL.
 
 ## Development with Automatic Docker Compose Support
 
-Spring Boot 4 includes the `spring-boot-docker-compose` dependency that automatically
+Spring Boot 3 includes the `spring-boot-docker-compose` dependency that automatically
 manages Docker containers during development. No manual `docker compose up` needed!
 
 ### How It Works
 
 When you run `./mvnw spring-boot:run`, Spring Boot will:
 1. Detect the `compose.yaml` or `docker-compose.yml` file in your project root.
-2. Automatically start the PostgreSQL container defined in the compose file.
+2. Automatically start the MySQL container defined in the compose file.
 3. Configure the datasource connection automatically.
 4. Stop the container when the application shuts down.
 
@@ -90,16 +90,16 @@ Create a `compose.yaml` file in your project root (or copy from `assets/compose.
 
 ```yaml
 services:
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "user"]
+      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD", "-U", "user"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -108,10 +108,10 @@ services:
         limits:
           memory: 512m
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - mysql_data:/var/lib/mysql
 
 volumes:
-  postgres_data:
+  mysql_data:
 ```
 > Compose spec v2+: omit the `version:` key. Spring Boot's `spring-boot-docker-compose`
 > works with this layout.
@@ -119,7 +119,7 @@ volumes:
 ### Usage
 
 ```bash
-# Just run your application - PostgreSQL starts automatically!
+# Just run your application - MySQL starts automatically!
 ./mvnw spring-boot:run
 ```
 
@@ -161,7 +161,7 @@ application is executed at runtime:
 | JVM (`Dockerfile`) | distroless glibc | baseline | baseline (jlink-trimmed) | nothing special |
 | JVM + AOT (`Dockerfile-aot`) | distroless glibc | ~30–50 % faster context refresh | ~JVM (+70–100 MB if you add the JDK AOT cache) | `aot` Maven profile |
 | CRaC (`Dockerfile-crac`) | Liberica CRaC slim-glibc | restore in ~tens of ms | ~JVM + checkpoint volume | **Linux + CRIU privileges**, LTS JDK 21, `crac` profile |
-| GraalVM native (`Dockerfile-native`) | distroless glibc | well under 1 s | much smaller compressed; on disk, comparable to JVM¹ | GraalVM 25 toolchain (in the build image), `native` profile |
+| GraalVM native (`Dockerfile-native`) | distroless glibc | well under 1 s | much smaller compressed; on disk, comparable to JVM¹ | GraalVM 21 toolchain (in the build image), `native` profile |
 
 > ¹ Sizes vary a lot with your dependency set, JDK and CPU architecture, so measure your
 > own rather than treating any number here as a target. The dependable native wins are
@@ -175,7 +175,7 @@ application is executed at runtime:
 Each Dockerfile is self-documenting (read the header comment) and pairs with a Compose
 file:
 
-| Image | Full-stack Compose (with PostgreSQL) | App-only Compose |
+| Image | Full-stack Compose (with MySQL) | App-only Compose |
 | ----- | ------------------------------------ | ---------------- |
 | `Dockerfile` | `docker-compose.yml` | `docker-compose-nodb.yml` |
 | `Dockerfile-aot` | `docker-compose-aot.yml` | — |
@@ -292,7 +292,7 @@ docker build -t my-spring-app .
 docker run --rm -e SPRING_BOOT_PORT=8080 -p 8080:8080 my-spring-app
 ```
 
-**With Compose (app + PostgreSQL):**
+**With Compose (app + MySQL):**
 
 ```bash
 docker compose -f docker-compose.yml up -d --build
@@ -322,9 +322,9 @@ docker run --rm -e SPRING_BOOT_PORT=8080 -p 8080:8080 my-spring-app-aot
 # or: docker compose -f docker-compose-aot.yml up --build
 ```
 
-### Optional: JDK 25 AOT class-loading cache (JEP 483/514)
+### Optional: JDK 21 AOT class-loading cache (JEP 483/514)
 
-For an additional **~20–30 %** class-loading saving you can layer the JDK 25 AOT
+For an additional **~20–30 %** class-loading saving you can layer the JDK 21 AOT
 class-loading cache on top of Spring AOT. A "training" run records every class loaded
 during a real startup; production reads the pre-verified, pre-linked class data
 directly from the cache.
@@ -370,7 +370,7 @@ the ahead-of-time compilation a native image requires.
   `CHECKPOINT_RESTORE`, `SYS_PTRACE` and `SYS_ADMIN` capabilities).
 - A **CRaC-enabled LTS JDK** — this image uses BellSoft Liberica **JDK 21** (CRaC is
   not published for non-LTS releases like 25). The build forces `-Djava.version=21`
-  so the app compiles for Java 21; Spring Boot 4 runs on Java 17+, so this is fine.
+  so the app compiles for Java 21; Spring Boot 3 runs on Java 17+, so this is fine.
 - A clean checkpoint requires **no open network sockets** — an open JDBC/Redis
   connection at checkpoint time aborts CRaC. Take the checkpoint with an in-memory
   profile, or register CRaC resource handlers that close pooled connections before the
@@ -393,14 +393,14 @@ docker run --rm -p 8080:8080 \
 
 ## 4. GraalVM Native Image (`Dockerfile-native`)
 
-Native compilation with GraalVM 25 for the fastest startup and lowest memory
+Native compilation with GraalVM 21 for the fastest startup and lowest memory
 footprint. The executable is built **"mostly static"** (`-H:+StaticExecutableWithDynamicLibC`,
 set via `NATIVE_IMAGE_OPTIONS`), so the distroless glibc base needs no extra shared
 libraries.
 
 **Features:**
 
-1. GraalVM 25 native-image compilation (required for Spring Boot 4; GraalVM 25 = JDK 25).
+1. GraalVM 21 native-image compilation (required for Spring Boot 3; GraalVM 21 = JDK 21).
 2. Ultra-fast startup (well under a second) and low memory use.
 3. Smallest *compressed* runtime image on a distroless `:nonroot` base — see the size note above before comparing `docker images` output.
 4. No local GraalVM install needed — the toolchain lives in the build image.
@@ -413,7 +413,7 @@ docker run --rm -e SPRING_BOOT_PORT=8080 -p 8080:8080 my-spring-app-native
 # or: docker compose -f docker-compose-native.yml up -d --build
 ```
 
-**Build a native executable locally** (needs a GraalVM 25+ toolchain on the `PATH`):
+**Build a native executable locally** (needs a GraalVM 21+ toolchain on the `PATH`):
 
 ```bash
 ./mvnw -Pnative -DskipTests package
@@ -422,14 +422,14 @@ docker run --rm -e SPRING_BOOT_PORT=8080 -p 8080:8080 my-spring-app-native
 
 ### Native build requirements
 
-- **GraalVM 25+** for Spring Boot 4.
+- **GraalVM 21+** for Spring Boot 3.
 - AOT freezes auto-configuration at build time, so the active Spring profile is
   **baked in** during `process-aot` and cannot be switched with a runtime env var
   (unlike the JVM / AOT / CRaC images).
-- Ensure reflection, resources and JNI access are declared. Spring Boot 4.x and most
+- Ensure reflection, resources and JNI access are declared. Spring Boot 3.x and most
   Spring libraries ship native hints out of the box; the `native` profile downloads
   GraalVM reachability metadata for third-party libraries.
-- Testcontainers 2.0+ supports native testing.
+- Testcontainers 1.0+ supports native testing.
 
 ## Choosing a Variant
 
@@ -451,7 +451,7 @@ Configure your application using environment variables in the Compose file:
 ```yaml
 environment:
   SPRING_BOOT_PORT: ${SPRING_BOOT_PORT:-8080}
-  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydb
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
   SPRING_DATASOURCE_USERNAME: user
   SPRING_DATASOURCE_PASSWORD: password
   SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
@@ -509,7 +509,7 @@ services:
   also runs unprivileged except for the CRIU capabilities it needs).
 - The distroless base has **no shell, package manager or curl**, which removes the bulk
   of OS-package CVEs and the usual "shell in the container" attack surface.
-- **Pin specific versions** in production (`postgres:18-alpine`, the digest of the
+- **Pin specific versions** in production (`mysql:8.3.0`, the digest of the
   distroless base) — avoid `latest`.
 - Scan images for vulnerabilities: `docker scout cves my-app`.
 
@@ -550,7 +550,7 @@ services:
 
 ### Development Setup
 ```bash
-# PostgreSQL starts automatically when you run the app (spring-boot-docker-compose)
+# MySQL starts automatically when you run the app (spring-boot-docker-compose)
 ./mvnw spring-boot:run
 
 # Or run the whole stack in containers
@@ -597,11 +597,11 @@ docker exec -it <crac-container> sh
 
 ### Database Connection Issues
 ```bash
-# Check if PostgreSQL is ready (the postgres image has pg_isready)
-docker exec <postgres-container> pg_isready -U user
+# Check if MySQL is ready (the mysql image has mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD
+docker exec <mysql-container> mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD
 
 # Connect to the database
-docker exec -it <postgres-container> psql -U user -d mydb
+docker exec -it <mysql-container> mysql -U user -d mydb
 ```
 
 ### CRaC checkpoint failures
@@ -626,9 +626,9 @@ docker build -f Dockerfile-native -t my-app-native .      # GraalVM native
 docker build -f Dockerfile-crac   -t my-app-crac .        # CRaC (Linux)
 
 # Run the full stack
-docker compose -f docker-compose.yml         up -d --build   # JVM + Postgres
-docker compose -f docker-compose-aot.yml     up -d --build   # AOT + Postgres
-docker compose -f docker-compose-native.yml  up -d --build   # native + Postgres
+docker compose -f docker-compose.yml         up -d --build   # JVM + MySQL
+docker compose -f docker-compose-aot.yml     up -d --build   # AOT + MySQL
+docker compose -f docker-compose-native.yml  up -d --build   # native + MySQL
 docker compose -f docker-compose-crac.yml    up --build      # CRaC (Linux, DB-free)
 
 # Logs / stop / clean
@@ -640,10 +640,10 @@ docker system prune -a                               # clean up unused images
 ## Deployment Checklist
 - [ ] Update database credentials (change from the default `user`/`password`).
 - [ ] Configure environment variables for production.
-- [ ] **Pin versions**: specific tags / digests (`postgres:18-alpine`, the distroless
+- [ ] **Pin versions**: specific tags / digests (`mysql:8.3.0`, the distroless
       base digest) — not `latest`.
-- [ ] **Java version**: Java 25 for the JVM/AOT/native images; **JDK 21** for CRaC.
-- [ ] **GraalVM version**: GraalVM 25+ for native images.
+- [ ] **Java version**: Java 21 for the JVM/AOT/native images; **JDK 21** for CRaC.
+- [ ] **GraalVM version**: GraalVM 21+ for native images.
 - [ ] Add the required Maven profile (`aot` / `native` / `crac`) to `pom.xml`.
 - [ ] Set up health probes at the orchestrator level (distroless images have no
       in-container `HEALTHCHECK`).

@@ -1,4 +1,4 @@
-# Appendix A — Prompt cheat sheet
+﻿# Appendix A 鈥?Prompt cheat sheet
 
 A collection of prompt patterns that work well with Dr JSkill and GitHub Copilot CLI. Copy, adapt, and keep close by.
 
@@ -17,7 +17,7 @@ Use Dr JSkill to create a new <app-name>.
 
 - Features: <one-line feature list>
 - Front-end: Vue (or React / Angular / Vanilla JS)
-- Database: PostgreSQL with Hibernate ddl-auto
+- Database: MySQL with Hibernate ddl-auto
 - No security
 - Include: Docker, tests, dotfiles
 ```
@@ -25,7 +25,7 @@ Use Dr JSkill to create a new <app-name>.
 **Pin versions:**
 ```
 Use Dr JSkill to create a new <app-name>. Use the versions specified in
-versions.json — do not override.
+versions.json 鈥?do not override.
 ```
 
 ## Feature additions
@@ -46,7 +46,7 @@ Add a search field above the todo list.
 Acceptance:
 - Typing filters the list in real time
 - Empty search shows everything
-- No API call per keystroke — debounce to 300ms
+- No API call per keystroke 鈥?debounce to 300ms
 - The search also works with the user filter
 ```
 
@@ -60,7 +60,7 @@ project.
 
 **Prevent framework churn:**
 ```
-Keep the current project layout — no new packages, no file renames, no
+Keep the current project layout 鈥?no new packages, no file renames, no
 refactoring beyond the change described.
 ```
 
@@ -103,7 +103,7 @@ the changes.
 
 **Revert cleanly:**
 ```
-Revert the last change completely — use git. Don't try to "fix" it in place.
+Revert the last change completely 鈥?use git. Don't try to "fix" it in place.
 ```
 
 ## Debugging & diagnostics
@@ -131,7 +131,7 @@ isn't a healthy startup message.
 
 **Semantic rename:**
 ```
-Rename the "name" field on AppUser to "login" across the codebase — entity,
+Rename the "name" field on AppUser to "login" across the codebase 鈥?entity,
 repository methods, DTOs, controllers, front-end. Use LSP rename where
 possible. Update all tests.
 ```
@@ -155,7 +155,7 @@ Follow Dr JSkill's testing conventions.
 **Integration test:**
 ```
 Add a *IT test that walks through the full create-read-delete lifecycle
-against a real Postgres container via @ServiceConnection. Follow
+against a real MySQL container via @ServiceConnection. Follow
 Dr JSkill's testing conventions.
 ```
 
@@ -169,7 +169,7 @@ Don't change the behavior.
 
 **Apply a specific recipe:**
 ```
-Apply <specific recipe, e.g. "virtual threads"> from references/SPRING-BOOT-4.md.
+Apply <specific recipe, e.g. "virtual threads"> from references/SPRING-BOOT-3.md.
 Quote the exact property added and show me the one-line diff.
 ```
 
@@ -196,7 +196,7 @@ Read SKILL.md and references/DATABASE.md before answering.
 
 **Follow a specific reference:**
 ```
-Apply the pattern described in references/<FILE>.md — quote the relevant
+Apply the pattern described in references/<FILE>.md 鈥?quote the relevant
 section in your response.
 ```
 
@@ -212,6 +212,6 @@ that choice for this project.
 ## Things that tend *not* to work well
 
 - **Vague prompts.** *"Make it better."* The agent will do something, but probably not what you wanted.
-- **Huge prompts.** *"Add users, OAuth, Prometheus, Kubernetes, and dark mode."* Break them up — one prompt, one commit.
+- **Huge prompts.** *"Add users, OAuth, Prometheus, Kubernetes, and dark mode."* Break them up 鈥?one prompt, one commit.
 - **Correcting via new prompts without reading the diff.** You'll drift further from intent each round. `git diff` first, prompt second.
 - **Ignoring errors.** If the agent says "I hit a 404 on npm install but I'll work around it", stop and fix the environment issue. Workarounds compound.

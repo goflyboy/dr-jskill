@@ -1,4 +1,4 @@
-// Dev Container configuration for Spring Boot + optional front-end + PostgreSQL.
+// Dev Container configuration for Spring Boot + optional front-end + MySQL.
 // See https://containers.dev/implementors/json_reference/
 {
     "name": "Spring Boot Dev Environment",
@@ -6,14 +6,14 @@
     "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
-    // JDK 25 + Node 24 features
+    // JDK 21 + Node 22 features
     "features": {
         "ghcr.io/devcontainers/features/java:1": {
-            "version": "25",
+            "version": "21",
             "installMaven": "true"
         },
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "24"
+            "version": "22"
         },
         "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
@@ -46,11 +46,11 @@
     // Forward default app + front-end dev ports. Worktree-specific ports from .env
     // are picked up by Docker Compose and Spring Boot; editors can auto-forward
     // those additional ports when they start listening.
-    "forwardPorts": [8080, 5173, 5432],
+    "forwardPorts": [8080, 5173, 3306],
     "portsAttributes": {
         "8080": { "label": "Spring Boot", "onAutoForward": "notify" },
         "5173": { "label": "Vite Dev Server", "onAutoForward": "silent" },
-        "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
+        "3306": { "label": "MySQL", "onAutoForward": "silent" }
     },
 
     // Run as non-root

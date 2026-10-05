@@ -1,4 +1,4 @@
-# Front-End Development with Vanilla JavaScript for Spring Boot Applications
+﻿# Front-End Development with Vanilla JavaScript for Spring Boot Applications
 
 ## Contents
 - [Overview](#overview)
@@ -24,10 +24,10 @@ This guide covers creating front-end applications for Spring Boot using plain Ja
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| Node.js | 24.21.0 |
-| npm | 11.20.0 |
-| Vite | 8.x |
-| Bootstrap | 5.3.8 |
+| Node.js | 22.14.0 |
+| npm | 10.9.2 |
+| Vite | 5.x |
+| Bootstrap | 5.3.3 |
 <!-- versions:end -->
 
 > Default instructions assume `npm`; `corepack enable` for pnpm/yarn. No OpenAPI client generation provided.
@@ -50,25 +50,25 @@ This guide covers creating front-end applications for Spring Boot using plain Ja
 
 ```
 my-spring-boot-app/
-├── frontend/                    # Vanilla JS application
-│   ├── src/
-│   │   ├── main.js             # Application entry point
-│   │   ├── router.js           # Client-side routing
-│   │   ├── components/         # UI components
-│   │   ├── pages/              # Page components
-│   │   ├── services/           # API services
-│   │   └── utils/              # Utility functions
-│   ├── public/                 # Public assets
-│   ├── index.html              # HTML entry point
-│   ├── vite.config.js          # Vite configuration
-│   ├── package.json            # Node dependencies
-│   └── .gitignore
-├── src/
-│   └── main/
-│       ├── java/               # Spring Boot backend
-│       └── resources/
-│           └── static/         # Production build output (auto-generated)
-└── pom.xml
+鈹溾攢鈹€ frontend/                    # Vanilla JS application
+鈹?  鈹溾攢鈹€ src/
+鈹?  鈹?  鈹溾攢鈹€ main.js             # Application entry point
+鈹?  鈹?  鈹溾攢鈹€ router.js           # Client-side routing
+鈹?  鈹?  鈹溾攢鈹€ components/         # UI components
+鈹?  鈹?  鈹溾攢鈹€ pages/              # Page components
+鈹?  鈹?  鈹溾攢鈹€ services/           # API services
+鈹?  鈹?  鈹斺攢鈹€ utils/              # Utility functions
+鈹?  鈹溾攢鈹€ public/                 # Public assets
+鈹?  鈹溾攢鈹€ index.html              # HTML entry point
+鈹?  鈹溾攢鈹€ vite.config.js          # Vite configuration
+鈹?  鈹溾攢鈹€ package.json            # Node dependencies
+鈹?  鈹斺攢鈹€ .gitignore
+鈹溾攢鈹€ src/
+鈹?  鈹斺攢鈹€ main/
+鈹?      鈹溾攢鈹€ java/               # Spring Boot backend
+鈹?      鈹斺攢鈹€ resources/
+鈹?          鈹斺攢鈹€ static/         # Production build output (auto-generated)
+鈹斺攢鈹€ pom.xml
 ```
 
 ## Setup Instructions
@@ -80,8 +80,8 @@ From your Spring Boot project root:
 ```bash
 # Create Vite project with vanilla template.
 # Two prompts must be silenced in non-interactive shells (CI, agents):
-#   1. npm's "Ok to proceed?" prompt → `-y` BEFORE the package name (or `--yes` with npx)
-#   2. create-vite 8.x's own prompts (e.g. "Use rolldown-vite?") → close stdin with `echo |`
+#   1. npm's "Ok to proceed?" prompt 鈫?`-y` BEFORE the package name (or `--yes` with npx)
+#   2. create-vite 8.x's own prompts (e.g. "Use rolldown-vite?") 鈫?close stdin with `echo |`
 # Without `echo |` the command still hangs in non-TTY shells even with `-y`.
 echo | npx --yes create-vite@latest frontend --template vanilla
 
@@ -136,7 +136,7 @@ export default defineConfig(({ mode }) => {
 })
 ```
 
-> Note: in Vite 8 the esbuild integration was made optional — `minify: 'esbuild'`
+> Note: in Vite 8 the esbuild integration was made optional 鈥?`minify: 'esbuild'`
 > and the `esbuild: { pure: [...] }` block now require a separate `esbuild` install
 > (`npm i -D esbuild`). The default minifier in Vite 8 (Rolldown-based) works out
 > of the box, so this template omits both to keep the dependency list minimal.
@@ -174,8 +174,8 @@ Add to your `pom.xml`:
                         <goal>install-node-and-npm</goal>
                     </goals>
                     <configuration>
-                        <nodeVersion>v24.21.0</nodeVersion>
-                        <npmVersion>11.20.0</npmVersion>
+                        <nodeVersion>v22.14.0</nodeVersion>
+                        <npmVersion>10.9.2</npmVersion>
                     </configuration>
                 </execution>
                 
@@ -252,11 +252,11 @@ Edit `frontend/package.json`:
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^8.0.0"
+    "vite": "^5.0.0"
   },
   "dependencies": {
-    "bootstrap": "5.3.8",
-    "bootstrap-icons": "1.13.1"
+    "bootstrap": "5.3.3",
+    "bootstrap-icons": "1.11.3"
   }
 }
 ```
@@ -914,7 +914,7 @@ main {
 
 ## Spring Boot SPA Controller
 
-To support client-side routing with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths — keeping proper JSON 404s for `/api/**` and `/actuator/**`:
+To support client-side routing with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths 鈥?keeping proper JSON 404s for `/api/**` and `/actuator/**`:
 
 ```java
 package com.example.demo.controller;
@@ -1025,17 +1025,17 @@ This approach ensures that refreshing the browser on any route (e.g., `/items/12
 
 ### 6. Performance
 
-- **Dynamic `import()` for heavy modules** — load chart libraries, rich editors, or route handlers only when needed:
+- **Dynamic `import()` for heavy modules** 鈥?load chart libraries, rich editors, or route handlers only when needed:
   ```javascript
   button.addEventListener('click', async () => {
     const { renderChart } = await import('./chart.js')
     renderChart(data)
   })
   ```
-- **Code splitting** — Vite automatically creates a separate chunk for every dynamic `import()`.
-- **Production build** — `./mvnw package` (or `npm run build`) runs Vite's minification, tree shaking, and content-hashed filenames.
-- **Long-term asset caching** — hashed `/assets/**` files can be served with a 1-year `Cache-Control` (see `references/SPRING-BOOT-4.md` → Performance → Static resource caching). Keep `index.html` uncached.
-- **Avoid unnecessary re-renders** — since there's no framework diffing, update only the DOM nodes that actually changed rather than rebuilding whole sections.
+- **Code splitting** 鈥?Vite automatically creates a separate chunk for every dynamic `import()`.
+- **Production build** 鈥?`./mvnw package` (or `npm run build`) runs Vite's minification, tree shaking, and content-hashed filenames.
+- **Long-term asset caching** 鈥?hashed `/assets/**` files can be served with a 1-year `Cache-Control` (see `references/SPRING-BOOT-3.md` 鈫?Performance 鈫?Static resource caching). Keep `index.html` uncached.
+- **Avoid unnecessary re-renders** 鈥?since there's no framework diffing, update only the DOM nodes that actually changed rather than rebuilding whole sections.
 
 ### 7. Security
 

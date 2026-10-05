@@ -33,7 +33,7 @@
 # downloaded Node.js binaries (glibc-linked) run while building the bundled UI, and
 # so the jlink runtime below is glibc-linked to match the distroless glibc base.
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:25-jdk-noble AS build
+FROM eclipse-temurin:21-jdk-noble AS build
 
 # Mirrors used while building the bundled front-end. Behind a corporate proxy the
 # public defaults are often unreachable from inside the build container; point these

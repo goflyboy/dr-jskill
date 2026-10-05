@@ -40,7 +40,7 @@
 # spring-boot:process-aot generates and compiles the AOT factory/hints code before
 # the jar is repackaged.
 # ---------------------------------------------------------------------------
-FROM eclipse-temurin:25-jdk-noble AS build
+FROM eclipse-temurin:21-jdk-noble AS build
 
 # Front-end build mirrors — see the comment in `Dockerfile` for the full explanation.
 # NPM_CONFIG_REGISTRY alone does not redirect the Node/npm binary downloads.

@@ -10,9 +10,9 @@ You don't need prior Spring Boot experience. You do need to be comfortable with 
 
 A small **Todo List** web application with:
 
-- A REST API backed by Spring Boot 4 + Hibernate + PostgreSQL
+- A REST API backed by Spring Boot 3 + Hibernate + MySQL
 - A Vue.js front-end served by the Spring Boot application
-- Docker for local development (Postgres in a container, auto-started)
+- Docker for local development (MySQL in a container, auto-started)
 - A simple "switch user" feature (no real authentication)
 - Tests, performance tuning, and a deployable Docker image
 

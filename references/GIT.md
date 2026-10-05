@@ -51,7 +51,7 @@ Use `git add .` only when you have reviewed the full working tree and know every
 
 ## Branching
 
-- Use short, descriptive branch names such as `add-user-filtering`, `fix-login-validation`, or `update-postgres-config`.
+- Use short, descriptive branch names such as `add-user-filtering`, `fix-login-validation`, or `update-mysql-config`.
 - Keep one branch focused on one task or feature.
 - Start from an up-to-date `main` unless the task explicitly depends on another branch.
 - Avoid long-lived branches. Merge or close stale work quickly.
@@ -167,7 +167,7 @@ Initial day-to-day guidance:
 
 ### Avoiding port conflicts across worktrees
 
-Each worktree should be able to run the Spring Boot app, Vite dev server, and PostgreSQL at the same time as the other worktrees. The recommended pattern is:
+Each worktree should be able to run the Spring Boot app, Vite dev server, and MySQL at the same time as the other worktrees. The recommended pattern is:
 
 1. Keep `.env` ignored and local to each worktree.
 2. Copy `.env.sample` to `.env` inside each worktree and choose unique port values.
@@ -179,12 +179,12 @@ Recommended local port variables:
 ```dotenv
 SPRING_BOOT_PORT=18080
 VITE_PORT=15173
-POSTGRES_PORT=15432
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:15432/mydb
+MYSQL_PORT=15432
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:15432/mydb
 COMPOSE_PROJECT_NAME=my-app-main-a1b2c3
 ```
 
-The exact values should be different per worktree. The defaults remain the usual ports (`8080`, `5173`, `5432`) when `.env` is absent.
+The exact values should be different per worktree. The defaults remain the usual ports (`8080`, `5173`, `3306`) when `.env` is absent.
 
 ### Spring Boot configuration
 
@@ -194,7 +194,7 @@ Import the root `.env` file directly from `src/main/resources/application.proper
 spring.config.import=optional:file:.env[.properties]
 
 server.port=${SPRING_BOOT_PORT:8080}
-spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/mydb}
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/mydb}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME:user}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:password}
 ```
@@ -233,32 +233,32 @@ export default defineConfig(({ mode }) => {
 
 ### Docker Compose configuration
 
-For the development database in `compose.yaml`, map the host port through `POSTGRES_PORT`:
+For the development database in `compose.yaml`, map the host port through `MYSQL_PORT`:
 
 ```yaml
 services:
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
 ```
 
 For a full-stack `docker-compose.yml`, use the host-specific ports and avoid fixed container names:
 
 ```yaml
 services:
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
 
   spring-app:
     build:
@@ -266,32 +266,32 @@ services:
       dockerfile: Dockerfile
     environment:
       SPRING_BOOT_PORT: ${SPRING_BOOT_PORT:-8080}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
     ports:
       - "${SPRING_BOOT_PORT:-8080}:${SPRING_BOOT_PORT:-8080}"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
 ```
 
-Do not use hardcoded `container_name: postgres-db` or `container_name: spring-boot-app` in worktree-safe Compose files. Let Compose derive names from `COMPOSE_PROJECT_NAME`, or parameterize names if your tooling requires stable names:
+Do not use hardcoded `container_name: mysql-db` or `container_name: spring-boot-app` in worktree-safe Compose files. Let Compose derive names from `COMPOSE_PROJECT_NAME`, or parameterize names if your tooling requires stable names:
 
 ```yaml
-container_name: "${COMPOSE_PROJECT_NAME:-my-app}-postgres"
+container_name: "${COMPOSE_PROJECT_NAME:-my-app}-mysql"
 ```
 
 ### Dev Containers
 
-For `.devcontainer/docker-compose.yml`, use the same PostgreSQL host-port mapping:
+For `.devcontainer/docker-compose.yml`, use the same MySQL host-port mapping:
 
 ```yaml
 services:
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
 ```
 
 For Spring Boot and Vite running inside the dev container, prefer editor auto-forwarding or export the generated values before opening the container. `devcontainer.json` does not automatically load `.env` as host environment variables for `forwardPorts`.
@@ -300,16 +300,16 @@ If you want explicit forwarding, keep defaults in the committed file and overrid
 
 ```jsonc
 {
-  "forwardPorts": [8080, 5173, 5432],
+  "forwardPorts": [8080, 5173, 3306],
   "portsAttributes": {
     "8080": { "label": "Spring Boot", "onAutoForward": "notify" },
     "5173": { "label": "Vite Dev Server", "onAutoForward": "silent" },
-    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
+    "3306": { "label": "MySQL", "onAutoForward": "silent" }
   }
 }
 ```
 
-The important worktree-safe behavior is that Docker Compose uses `POSTGRES_PORT`, and the application-level configs use `SPRING_BOOT_PORT` and `VITE_PORT`.
+The important worktree-safe behavior is that Docker Compose uses `MYSQL_PORT`, and the application-level configs use `SPRING_BOOT_PORT` and `VITE_PORT`.
 
 ## Agent rules
 

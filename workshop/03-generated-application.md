@@ -3,7 +3,7 @@
 **In this chapter:**
 - Understand the **backend** layout: entity, repository, service, controller
 - See how **Hibernate** creates the database schema for you
-- See how **Docker Compose** starts PostgreSQL during development
+- See how **Docker Compose** starts MySQL during development
 - See how **Vite + Vue** plug into the Maven build
 
 No code to write. You'll explore what the agent already generated, so Chapter 4 onwards makes sense.
@@ -24,7 +24,7 @@ Focus on four areas:
 pom.xml                    <-- the Maven build file (deps, plugins, profiles)
 src/main/java/             <-- the Spring Boot backend
 src/main/resources/        <-- configuration
-compose.yaml               <-- Docker Compose for Postgres
+compose.yaml               <-- Docker Compose for MySQL
 frontend/                  <-- Vue.js application
 ```
 
@@ -122,7 +122,7 @@ Open `src/main/resources/application.properties`. You'll see something like:
 spring.application.name=todo-app
 
 # Datasource — injected by spring-boot-docker-compose at dev time
-spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mydb}
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/mydb}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME:user}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:password}
 
@@ -148,16 +148,16 @@ Open `compose.yaml`:
 
 ```yaml
 services:
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "user"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
       ...
 ```
 
@@ -282,7 +282,7 @@ Have a look at these files — each one does a small job:
 | `Dockerfile-native` | GraalVM native image — smallest image, fastest startup |
 | `Dockerfile-crac` | CRaC (Coordinated Restore at Checkpoint) — near-instant restore |
 | `checkpoint-and-run.sh` | Entrypoint helper used by `Dockerfile-crac` |
-| `compose.yaml` | Postgres for development |
+| `compose.yaml` | MySQL for development |
 
 None of these are flashy — they're the difference between "a prototype" and "a project a team can pick up tomorrow". Dr JSkill ships them by default.
 

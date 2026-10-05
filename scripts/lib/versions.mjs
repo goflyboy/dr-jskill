@@ -32,32 +32,35 @@ function getVersionValue(key, defaultValue = '') {
   return value != null && String(value).trim() !== '' ? String(value) : defaultValue;
 }
 
-export function getJavaVersion() { return getVersionValue('javaVersion', '25'); }
-export function getBootPreferredMajor() { return getVersionValue('springBootPreferredMajor', '4'); }
-export function getBootFallback() { return getVersionValue('springBootFallback', '4.1.1'); }
-export function getPostgresVersion() { return getVersionValue('postgresVersion', '18'); }
-export function getTemurinVersion() { return getVersionValue('temurinVersion', '25'); }
+export function getJavaVersion() { return getVersionValue('javaVersion', '21'); }
+export function getMavenCompilerRelease() { return getVersionValue('mavenCompilerRelease', getJavaVersion()); }
+export function getBootPreferredMajor() { return getVersionValue('springBootPreferredMajor', '3'); }
+export function getBootFallback() { return getVersionValue('springBootFallback', '3.3.5'); }
+export function getMysqlVersion() { return getVersionValue('mysqlVersion', '8.3.0'); }
+export function getH2Version() { return getVersionValue('h2Version', '2.2.220'); }
+export function getLombokVersion() { return getVersionValue('lombokVersion', '1.18.30'); }
+export function getTemurinVersion() { return getVersionValue('temurinVersion', '21'); }
 export function getMavenMinVersion() { return getVersionValue('mavenMinVersion', '3.8.0'); }
-export function getGraalvmVersion() { return getVersionValue('graalvmVersion', '25'); }
-export function getNodeVersion() { return getVersionValue('nodeVersion', '24.21.0'); }
-export function getNpmVersion() { return getVersionValue('npmVersion', '11.20.0'); }
-export function getViteVersion() { return getVersionValue('viteVersion', '8'); }
+export function getGraalvmVersion() { return getVersionValue('graalvmVersion', '21'); }
+export function getNodeVersion() { return getVersionValue('nodeVersion', '22.14.0'); }
+export function getNpmVersion() { return getVersionValue('npmVersion', '10.9.2'); }
+export function getViteVersion() { return getVersionValue('viteVersion', '5'); }
 export function getMavenFrontendPluginVersion() { return getVersionValue('mavenFrontendPluginVersion', '2.0.2'); }
 export function getVueVersion() { return getVersionValue('vueVersion', '3'); }
-export function getPiniaVersion() { return getVersionValue('piniaVersion', '4'); }
-export function getVueRouterVersion() { return getVersionValue('vueRouterVersion', '5'); }
-export function getReactVersion() { return getVersionValue('reactVersion', '19'); }
-export function getReactRouterVersion() { return getVersionValue('reactRouterVersion', '8'); }
-export function getAngularVersion() { return getVersionValue('angularVersion', '22'); }
-export function getBootstrapVersion() { return getVersionValue('bootstrapVersion', '5.3.8'); }
-export function getBootstrapIconsVersion() { return getVersionValue('bootstrapIconsVersion', '1.13.1'); }
-export function getTestcontainersVersion() { return getVersionValue('testcontainersVersion', '2.0.5'); }
-export function getSpringFrameworkVersion() { return getVersionValue('springFrameworkVersion', '7.0'); }
-export function getHibernateVersion() { return getVersionValue('hibernateVersion', '7.4'); }
+export function getPiniaVersion() { return getVersionValue('piniaVersion', '2'); }
+export function getVueRouterVersion() { return getVersionValue('vueRouterVersion', '4'); }
+export function getReactVersion() { return getVersionValue('reactVersion', '18'); }
+export function getReactRouterVersion() { return getVersionValue('reactRouterVersion', '6'); }
+export function getAngularVersion() { return getVersionValue('angularVersion', '18'); }
+export function getBootstrapVersion() { return getVersionValue('bootstrapVersion', '5.3.3'); }
+export function getBootstrapIconsVersion() { return getVersionValue('bootstrapIconsVersion', '1.11.3'); }
+export function getTestcontainersVersion() { return getVersionValue('testcontainersVersion', '1.19.8'); }
+export function getSpringFrameworkVersion() { return getVersionValue('springFrameworkVersion', '6.1'); }
+export function getHibernateVersion() { return getVersionValue('hibernateVersion', '6.5'); }
 
 /**
- * Strip legacy qualifiers (.RELEASE, .GA) that Spring Boot 4+ no longer uses.
- * E.g. "4.0.2.RELEASE" → "4.0.2", "4.0.2" → "4.0.2"
+ * Strip legacy qualifiers (.RELEASE, .GA) that some Spring Boot versions use.
+ * E.g. "3.2.0.RELEASE" → "3.2.0", "4.0.2" → "4.0.2"
  */
 function stripLegacyQualifier(version) {
   return version.replace(/\.(RELEASE|GA)$/i, '');
@@ -79,73 +82,47 @@ async function existsOnMavenCentral(version) {
 }
 
 /**
- * Resolve preferred Spring Boot version with fallback.
- * Fetches the default boot version from start.spring.io metadata,
- * validates it exists on Maven Central, and strips legacy qualifiers.
- * Only considers versions ≥ 4.x.
+ * Resolve the preferred Spring Boot version.
+ *
+ * The version is resolved from Maven Central's `maven-metadata.xml` rather than
+ * start.spring.io: the Initializr only offers the current Boot line (4.x), so it
+ * rejects every 3.x request with HTTP 400. Maven Central keeps the full history,
+ * which is what lets this skill stay on a 3.x line.
+ *
+ * Only stable releases (no `-M`, `-RC`, `-SNAPSHOT`, `-BUILD-SNAPSHOT`) matching
+ * `preferredMajor` are considered; the highest one wins, and `fallback` is used
+ * when the network is unavailable or nothing matches.
  */
 export async function resolveBootVersion(preferredMajor, fallback) {
-  preferredMajor = preferredMajor || getBootPreferredMajor();
+  preferredMajor = String(preferredMajor || getBootPreferredMajor());
   fallback = fallback || getBootFallback();
+
+  const metadataUrl = 'https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-starter-parent/maven-metadata.xml';
   try {
-    const response = await fetch('https://start.spring.io', {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
+    const response = await fetch(metadataUrl, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
     if (!response.ok) {
-      console.error(`Warning: start.spring.io returned HTTP ${response.status}. Using fallback ${fallback}.`);
-      return fallback;
-    }
-    let metadata;
-    try {
-      metadata = await response.json();
-    } catch {
-      console.error(`Warning: start.spring.io returned invalid JSON. Using fallback ${fallback}.`);
+      console.error(`Warning: Maven Central returned HTTP ${response.status}. Using fallback ${fallback}.`);
       return fallback;
     }
 
-    // Try multiple metadata paths (API may evolve)
-    const fetched = metadata?.bootVersion?.default
-      || metadata?.platformVersion?.default
-      || metadata?.bootVersion;
+    const xml = await response.text();
+    const versions = [...xml.matchAll(/<version>([^<]+)<\/version>/g)].map((m) => stripLegacyQualifier(m[1].trim()));
 
-    if (!fetched || typeof fetched !== 'string') {
-      console.error(`Warning: could not read bootVersion from start.spring.io metadata. Using fallback ${fallback}.`);
-      return fallback;
-    }
+    const candidates = versions
+      .filter((v) => v.startsWith(`${preferredMajor}.`))
+      .filter((v) => /^\d+\.\d+\.\d+$/.test(v)) // stable only
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-    const cleaned = stripLegacyQualifier(fetched);
-
-    if (cleaned.startsWith(`${preferredMajor}.`)) {
-      // Verify the version actually exists on Maven Central
-      if (await existsOnMavenCentral(cleaned)) {
-        return cleaned;
-      }
-      console.error(`⚠️  Spring Boot ${cleaned} (from start.spring.io) is not on Maven Central yet. Using fallback ${fallback}.`);
-      return fallback;
-    }
-
-    // start.spring.io default doesn't match our preferred major — scan available versions
-    const values = metadata?.bootVersion?.values || [];
-    const candidates = values
-      .map(v => typeof v === 'string' ? v : v?.id)
-      .filter(Boolean)
-      .map(stripLegacyQualifier)
-      .filter(v => v.startsWith(`${preferredMajor}.`) && !v.includes('-'));
-    // Pick the highest stable version from the list
     if (candidates.length > 0) {
-      candidates.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
-      if (await existsOnMavenCentral(candidates[0])) {
-        return candidates[0];
-      }
+      return candidates[0];
     }
 
     console.error(
-      `⚠️  start.spring.io default bootVersion (${fetched}) does not match preferred major ${preferredMajor}. Using fallback ${fallback}. Override with --boot-version if needed.`
+      `⚠️  No stable Spring Boot ${preferredMajor}.x found on Maven Central. Using fallback ${fallback}. Override with --boot-version if needed.`
     );
     return fallback;
   } catch (err) {
-    console.error(`Warning: Failed to fetch bootVersion from start.spring.io: ${err?.message || String(err)}. Using fallback ${fallback}.`);
+    console.error(`Warning: Failed to reach Maven Central: ${err?.message || String(err)}. Using fallback ${fallback}.`);
     return fallback;
   }
 }
@@ -187,42 +164,37 @@ export function extractZip(zipPath, destDir = '.') {
 }
 
 /**
- * Download and extract a Spring Boot project from start.spring.io.
- * Automatically strips legacy .RELEASE/.GA qualifiers from bootVersion.
+ * Create a Spring Boot project and apply the skill's conventions.
+ *
+ * Historically this downloaded a starter.zip from start.spring.io. The Initializr
+ * only serves the current Boot line (4.x) and answers HTTP 400 for 3.x requests,
+ * so generation is now performed locally by `scaffold.mjs` (Maven Central is the
+ * version source). The function name is kept for backward compatibility with the
+ * `create-*.mjs` scripts.
  */
 export async function downloadAndExtractProject(params) {
   if (params.bootVersion) {
     params.bootVersion = stripLegacyQualifier(params.bootVersion);
   }
-  if (/[\\/]/.test(params.baseDir)) {
-    throw new Error(
-      `PROJECT_NAME must be a plain folder name, not a path (got "${params.baseDir}").\n` +
-      `Use --output-dir to choose where the project folder is created, e.g.\n` +
-      `  --output-dir ${dirname(params.baseDir)} ${basename(params.baseDir)}`,
-    );
-  }
-  const { outputDir: requestedOutputDir, ...initializerParams } = params;
-  const query = Object.entries(initializerParams)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-    .join('&');
-  const url = `https://start.spring.io/starter.zip?${query}`;
-  const outputDir = resolve(requestedOutputDir || process.cwd());
-  mkdirSync(outputDir, { recursive: true });
-  const zipFile = join(outputDir, `${params.baseDir}.zip`);
-
-  await downloadFile(url, zipFile);
-  console.log('  📦 Extracting project…');
-  extractZip(zipFile, outputDir);
-  unlinkSync(zipFile);
-
-  const projectDir = join(outputDir, params.baseDir);
+  const { generateProject } = await import('./scaffold.mjs');
+  const projectDir = await generateProject({
+    baseDir: params.baseDir,
+    groupId: params.groupId,
+    artifactId: params.artifactId,
+    name: params.name,
+    description: params.description,
+    packageName: params.packageName,
+    javaVersion: params.javaVersion,
+    bootVersion: params.bootVersion,
+    dependencies: params.dependencies,
+    outputDir: params.outputDir,
+  });
 
   // Ensure pom.xml has <start-class> for process-aot main class detection
   if (params.packageName && params.name) {
     const mainClassName = toCamelCase(params.name) + 'Application';
     patchPomStartClass(projectDir, `${params.packageName}.${mainClassName}`);
   }
-  console.log('  ✅ Project extracted successfully.');
   return projectDir;
 }
 
@@ -239,7 +211,7 @@ function toCamelCase(name) {
 
 /**
  * Inject <start-class> property into an existing pom.xml.
- * Spring Boot 4's process-aot goal requires an explicit main class.
+ * The AOT goal needs an explicit main class; start.spring.io may omit it.
  */
 export function patchPomStartClass(projectDir, mainClass) {
   const pomPath = join(projectDir, 'pom.xml');
@@ -261,7 +233,7 @@ export function patchPomStartClass(projectDir, mainClass) {
  *
  * start.spring.io emits `<App>ApplicationTests` annotated with
  * `@Import(TestcontainersConfiguration.class)`, so despite the `*Tests` name Surefire
- * runs it during `./mvnw test` and it boots a real PostgreSQL container. That
+ * runs it during `./mvnw test` and it boots a real MySQL container. That
  * contradicts the convention the skill documents ("anything needing a container belongs
  * in `*IT`", references/TEST.md) and makes `./mvnw test` slow and Docker-dependent.
  *
@@ -373,10 +345,46 @@ export function patchPomProfiles(projectDir) {
     '',
   ].join('\n');
 
+  const lombokProfile = [
+    `${t(2)}<!-- Lombok is OFF by default: Dr JSkill targets plain Java 21 records and`,
+    `${t(2)}     generated accessors, not annotation-processor magic. Enable it only if you`,
+    `${t(2)}     consciously accept the trade-offs. Activate with -Plombok. -->`,
+    `${t(2)}<profile>`,
+    `${t(3)}<id>lombok</id>`,
+    `${t(3)}<dependencies>`,
+    `${t(4)}<dependency>`,
+    `${t(5)}<groupId>org.projectlombok</groupId>`,
+    `${t(5)}<artifactId>lombok</artifactId>`,
+    `${t(5)}<version>${getLombokVersion()}</version>`,
+    `${t(5)}<scope>provided</scope>`,
+    `${t(4)}</dependency>`,
+    `${t(3)}</dependencies>`,
+    `${t(2)}<build>`,
+    `${t(3)}<plugins>`,
+    `${t(4)}<plugin>`,
+    `${t(5)}<groupId>org.apache.maven.plugins</groupId>`,
+    `${t(5)}<artifactId>maven-compiler-plugin</artifactId>`,
+    `${t(5)}<configuration>`,
+    `${t(6)}<annotationProcessorPaths>`,
+    `${t(7)}<path>`,
+    `${t(8)}<groupId>org.projectlombok</groupId>`,
+    `${t(8)}<artifactId>lombok</artifactId>`,
+    `${t(8)}<version>${getLombokVersion()}</version>`,
+    `${t(7)}</path>`,
+    `${t(6)}</annotationProcessorPaths>`,
+    `${t(5)}</configuration>`,
+    `${t(4)}</plugin>`,
+    `${t(3)}</plugins>`,
+    `${t(2)}</build>`,
+    `${t(2)}</profile>`,
+    '',
+  ].join('\n');
+
   let toInsert = '';
   if (!pom.includes('<id>aot</id>')) toInsert += aotProfile;
   if (!pom.includes('<id>crac</id>')) toInsert += cracProfile;
-  if (!toInsert) return; // Both profiles already present.
+  if (!pom.includes('<id>lombok</id>')) toInsert += lombokProfile;
+  if (!toInsert) return; // All profiles already present.
 
   if (/<\/profiles>/.test(pom)) {
     pom = pom.replace(/([ \t]*)<\/profiles>/, (_m, indent) => `${toInsert}${indent}</profiles>`);
@@ -416,7 +424,7 @@ function copyAssetIfMissing(assetName, destPath) {
 /**
  * Copy an asset over the destination even if it already exists. Used to replace
  * stub files generated by start.spring.io (e.g. its compose.yaml, which pins
- * `postgres:latest`) with the skill's curated, version-pinned assets.
+ * `mysql:latest`) with the skill's curated, version-pinned assets.
  */
 function copyAssetOverwrite(assetName, destPath) {
   const assetPath = resolve(ASSETS_DIR, assetName);
@@ -431,6 +439,12 @@ function writeTextFileIfMissing(destPath, content) {
   const destDir = dirname(destPath);
   if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true });
   writeFileSync(destPath, content, 'utf8');
+}
+
+/** Read an asset as text, returning '' when it is missing. */
+function readAssetText(assetName) {
+  const assetPath = resolve(ASSETS_DIR, assetName);
+  return existsSync(assetPath) ? readFileSync(assetPath, 'utf8') : '';
 }
 
 function escapeRegExp(value) {
@@ -470,17 +484,12 @@ function configureApplicationProperties(projectDir, { database = false } = {}) {
   // variables. Every key it provides therefore has to be dereferenced explicitly,
   // otherwise setting it in `.env` silently does nothing.
   content = upsertProperty(content, 'spring.profiles.active', '${SPRING_PROFILES_ACTIVE:default}');
-  // Jackson 3 (Spring Boot 4) enables FAIL_ON_NULL_FOR_PRIMITIVES by default, so a
-  // request body that omits a primitive field (e.g. {"title":"Buy milk"} with no
-  // "completed") is rejected with HTTP 400 instead of falling back to the Java
-  // default. See references/SPRING-BOOT-4.md.
-  content = upsertProperty(content, 'spring.jackson.deserialization.fail-on-null-for-primitives', 'false');
 
   if (database) {
     content = upsertProperty(
       content,
       'spring.datasource.url',
-      '${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/mydb}'
+      '${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}'
     );
     content = upsertProperty(content, 'spring.datasource.username', '${SPRING_DATASOURCE_USERNAME:user}');
     content = upsertProperty(content, 'spring.datasource.password', '${SPRING_DATASOURCE_PASSWORD:password}');
@@ -507,10 +516,19 @@ function configureTestApplicationProperties(projectDir, { database = false } = {
 
   let content = existsSync(target) ? readFileSync(target, 'utf8') : '';
 
-  content = upsertProperty(content, 'spring.jackson.deserialization.fail-on-null-for-primitives', 'false');
-
   if (database) {
     content = upsertProperty(content, 'spring.docker.compose.enabled', 'false');
+    // Container-backed tests (@ServiceConnection with MySQL) supply their own URL.
+    // Unit tests and slice tests that touch JPA use H2 in-memory instead, so
+    // `./mvnw test` never needs a running database.
+    content = upsertProperty(
+      content,
+      'spring.datasource.url',
+      `jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE`
+    );
+    content = upsertProperty(content, 'spring.datasource.driver-class-name', 'org.h2.Driver');
+    content = upsertProperty(content, 'spring.datasource.username', 'sa');
+    content = upsertProperty(content, 'spring.datasource.password', '');
     content = upsertProperty(content, 'spring.jpa.hibernate.ddl-auto', 'create-drop');
     content = upsertProperty(content, 'spring.jpa.open-in-view', 'false');
   }
@@ -523,9 +541,9 @@ function configureTestApplicationProperties(projectDir, { database = false } = {
 /**
  * Normalize the `TestcontainersConfiguration` generated by start.spring.io:
  *
- *  1. Pin the PostgreSQL image — the generated code uses `postgres:latest`,
+ *  1. Pin the MySQL image — the generated code uses `mysql:latest`,
  *     which makes integration tests non-reproducible and silently drifts to new
- *     major PostgreSQL releases. Pin it to `versions.json` (same tag as
+ *     major MySQL releases. Pin it to `versions.json` (same tag as
  *     `compose.yaml`).
  *  2. Make the class and its `@Bean` method `public` — start.spring.io emits a
  *     package-private class, which cannot be `@Import`ed from tests that live in
@@ -539,16 +557,45 @@ function normalizeTestcontainersConfiguration(projectDir, { database = false } =
   const testJavaDir = join(projectDir, 'src', 'test', 'java');
   if (!existsSync(testJavaDir)) return;
 
-  const image = `postgres:${getPostgresVersion()}-alpine`;
+  const image = `mysql:${getMysqlVersion()}`;
   for (const file of listFilesRecursively(testJavaDir)) {
     if (!file.endsWith('TestcontainersConfiguration.java')) continue;
     const content = readFileSync(file, 'utf8');
     const next = content
-      .replace(/postgres:latest/g, image)
+      .replace(/mysql:latest/g, image)
       .replace(/^(\s*)class (\w+)/m, '$1public class $2')
       .replace(/^(\s*)(\w+Container(?:<[^>]*>)? \w+\(\))/m, '$1public $2');
     if (next !== content) writeFileSync(file, next, 'utf8');
   }
+}
+
+/**
+ * Ensure the H2 driver is on the test classpath so unit and slice tests that touch
+ * JPA can run without a database. MySQL remains the runtime target; H2 is only a
+ * convenience for fast, container-free tests. Idempotent.
+ */
+function addH2TestDependency(projectDir, { database = false } = {}) {
+  if (!database) return;
+  const pomPath = join(projectDir, 'pom.xml');
+  if (!existsSync(pomPath)) return;
+  let pom = readFileSync(pomPath, 'utf8');
+  if (/<artifactId>h2<\/artifactId>/.test(pom)) return; // Already present
+
+  const anchor = pom.match(/<dependency>[\s\S]*?<\/dependency>/);
+  if (!anchor || anchor.index === undefined) return;
+
+  const snippet =
+    '\t\t<dependency>\n' +
+    '\t\t\t<groupId>com.h2database</groupId>\n' +
+    '\t\t\t<artifactId>h2</artifactId>\n' +
+    '\t\t\t<scope>test</scope>\n' +
+    '\t\t</dependency>\n';
+  // Insert right after the last <dependency> block inside <dependencies>.
+  const lastDep = pom.lastIndexOf('</dependency>');
+  if (lastDep === -1) return;
+  const close = lastDep + '</dependency>'.length;
+  pom = `${pom.slice(0, close)}\n${snippet}${pom.slice(close)}`;
+  writeFileSync(pomPath, pom, 'utf8');
 }
 
 function listFilesRecursively(dir) {
@@ -619,6 +666,7 @@ export function applyDotfiles(projectDir, options = {}) {
   copyAssetIfMissing('env.sample', join(projectDir, '.env.sample'));
   configureApplicationProperties(projectDir, { database: hasDatabase });
   configureTestApplicationProperties(projectDir, { database: hasDatabase });
+  addH2TestDependency(projectDir, { database: hasDatabase });
   normalizeTestcontainersConfiguration(projectDir, { database: hasDatabase });
   copyAssetIfMissing('editorconfig', join(projectDir, '.editorconfig'));
   copyAssetIfMissing('gitattributes', join(projectDir, '.gitattributes'));
@@ -640,7 +688,7 @@ export function applyDotfiles(projectDir, options = {}) {
     stripFrontendCopyLines(join(projectDir, 'Dockerfile-crac'));
   }
   if (hasDatabase) {
-    // start.spring.io generates its own compose.yaml pinned to `postgres:latest`;
+    // start.spring.io generates its own compose.yaml pinned to `mysql:latest`;
     // overwrite it with the curated, version-pinned asset (healthcheck + volume).
     copyAssetOverwrite('compose.yaml', join(projectDir, 'compose.yaml'));
     copyAssetIfMissing('docker-compose.yml', join(projectDir, 'docker-compose.yml'));
@@ -670,8 +718,10 @@ export function applyDotfiles(projectDir, options = {}) {
   }
   // CI workflow
   copyAssetIfMissing(join('ci', 'github-actions.yml'), join(projectDir, '.github', 'workflows', 'ci.yml'));
-  // Copilot CLI LSP config (wires JDTLS for Java)
-  copyAssetIfMissing('lsp.json', join(projectDir, '.github', 'lsp.json'));
+  // AI agent configuration. Cursor reads .cursor/rules/*.mdc; Codex reads AGENTS.md.
+  // (The old .github/lsp.json was Copilot-CLI-only and is no longer shipped.)
+  copyAssetIfMissing(join('cursor', 'rules', 'dr-jskill-java.mdc'), join(projectDir, '.cursor', 'rules', 'dr-jskill-java.mdc'));
+  writeTextFileIfMissing(join(projectDir, 'AGENTS.md'), readAssetText('AGENTS.md.tmpl'));
   // StartupInfoListener (REQUIRED per SPRING-BOOT-4.md) — prints access URLs at boot.
   writeStartupInfoListener(projectDir, options.packageName);
   // Activate Maven Failsafe so `./mvnw verify` actually runs *IT integration tests

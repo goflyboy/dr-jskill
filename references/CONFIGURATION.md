@@ -14,7 +14,7 @@
 - [References](#references)
 
 ## Overview
-This guide covers configuration best practices for Spring Boot 4 applications, including profiles, externalized configuration, secrets management, and environment-specific settings.
+This guide covers configuration best practices for Spring Boot 3 applications, including profiles, externalized configuration, secrets management, and environment-specific settings.
 
 **Key Principles:**
 
@@ -56,7 +56,7 @@ logging.level.com.example.myapp=DEBUG
 logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n
 
 # Database Configuration
-spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/mydb}
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/mydb}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME:user}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:password}
 spring.datasource.hikari.maximum-pool-size=10
@@ -119,8 +119,8 @@ spring.jpa.show-sql=true
 spring.jpa.hibernate.ddl-auto=update
 logging.level.com.example.myapp=DEBUG
 
-# Use local PostgreSQL
-spring.datasource.url=jdbc:postgresql://localhost:5432/mydb_dev
+# Use local MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/mydb_dev
 ```
 
 **Example: `application-prod.properties`**
@@ -226,8 +226,8 @@ app.api.secret=${API_SECRET}
 export SPRING_BOOT_PORT=8080
 
 # application.properties: spring.datasource.url
-export POSTGRES_PORT=5432
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:${POSTGRES_PORT}/mydb
+export MYSQL_PORT=3306
+export SPRING_DATASOURCE_URL=jdbc:mysql://localhost:${MYSQL_PORT}/mydb
 ```
 
 ### Docker and Environment Variables
@@ -243,7 +243,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       SPRING_BOOT_PORT: ${SPRING_BOOT_PORT:-8080}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}  # From .env file
     env_file:
@@ -254,7 +254,7 @@ services:
 
 ```bash
 SPRING_BOOT_PORT=8080
-POSTGRES_PORT=5432
+MYSQL_PORT=3306
 DB_PASSWORD=secret-password
 API_KEY=your-api-key
 API_SECRET=your-api-secret
@@ -590,7 +590,7 @@ Create `application-test.properties` for integration tests:
 spring.datasource.url=jdbc:h2:mem:testdb
 spring.datasource.driver-class-name=org.h2.Driver
 
-# Or use TestContainers with PostgreSQL (recommended)
+# Or use TestContainers with MySQL (recommended)
 # Configuration is automatic with @TestContainers
 
 # Disable Docker Compose support in tests

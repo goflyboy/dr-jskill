@@ -125,7 +125,7 @@ First run is slow — Maven downloads Spring Boot, dependencies compile, and Vit
 
 A few things happen in parallel:
 
-- **Docker Compose starts PostgreSQL** automatically (thanks to `spring-boot-docker-compose` — the `compose.yaml` is detected at boot).
+- **Docker Compose starts MySQL** automatically (thanks to `spring-boot-docker-compose` — the `compose.yaml` is detected at boot).
 - **Hibernate creates the schema** from the `@Entity` classes (`spring.jpa.hibernate.ddl-auto=update`).
 - **Vite builds the front-end bundle** (a one-off production build run by the `frontend-maven-plugin`, not the dev server) and Spring Boot serves it from `/`. For hot reload you run `npm run dev` separately — see chapter 3.
 
@@ -149,7 +149,7 @@ You'll see a JSON array of todos. The exact URL might differ slightly (`/api/tod
 
 ## 8. Stop the application
 
-In the terminal running `./mvnw spring-boot:run`, press **Ctrl+C**. Spring Boot shuts down cleanly and stops the Postgres container too.
+In the terminal running `./mvnw spring-boot:run`, press **Ctrl+C**. Spring Boot shuts down cleanly and stops the MySQL container too.
 
 ## 9. Commit the checkpoint
 

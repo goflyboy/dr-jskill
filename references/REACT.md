@@ -1,4 +1,4 @@
-# Front-End Development with React for Spring Boot Applications
+﻿# Front-End Development with React for Spring Boot Applications
 
 ## Contents
 - [Overview](#overview)
@@ -15,7 +15,7 @@
 - [Additional Resources](#additional-resources)
 
 ## Overview
-This guide covers creating front-end applications for Spring Boot using React 19 and Vite, with hot reload during development and optimized production builds integrated into the Spring Boot package.
+This guide covers creating front-end applications for Spring Boot using React 18 and Vite, with hot reload during development and optimized production builds integrated into the Spring Boot package.
 
 ## Versions (managed via `versions.json`)
 
@@ -24,11 +24,11 @@ This guide covers creating front-end applications for Spring Boot using React 19
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| Node.js | 24.21.0 |
-| npm | 11.20.0 |
-| React | 19.x |
-| Vite | 8.x |
-| React Router | 8.x |
+| Node.js | 22.14.0 |
+| npm | 10.9.2 |
+| React | 18.x |
+| Vite | 5.x |
+| React Router | 6.x |
 <!-- versions:end -->
 
 > Tip: `corepack enable` for pnpm/yarn if desired. Default instructions assume `npm`. No OpenAPI client generation is provided; use `fetch`/`axios` as needed.
@@ -51,26 +51,26 @@ This guide covers creating front-end applications for Spring Boot using React 19
 
 ```
 my-spring-boot-app/
-├── frontend/                    # React application
-│   ├── src/
-│   │   ├── main.jsx            # React entry point
-│   │   ├── App.jsx             # Root component
-│   │   ├── components/         # React components
-│   │   ├── pages/              # Page components
-│   │   ├── hooks/              # Custom hooks
-│   │   ├── context/            # Context providers
-│   │   └── services/           # API services
-│   ├── public/                 # Public assets
-│   ├── index.html              # HTML entry point
-│   ├── vite.config.js          # Vite configuration
-│   ├── package.json            # Node dependencies
-│   └── .gitignore
-├── src/
-│   └── main/
-│       ├── java/               # Spring Boot backend
-│       └── resources/
-│           └── static/         # Production build output (auto-generated)
-└── pom.xml
+鈹溾攢鈹€ frontend/                    # React application
+鈹?  鈹溾攢鈹€ src/
+鈹?  鈹?  鈹溾攢鈹€ main.jsx            # React entry point
+鈹?  鈹?  鈹溾攢鈹€ App.jsx             # Root component
+鈹?  鈹?  鈹溾攢鈹€ components/         # React components
+鈹?  鈹?  鈹溾攢鈹€ pages/              # Page components
+鈹?  鈹?  鈹溾攢鈹€ hooks/              # Custom hooks
+鈹?  鈹?  鈹溾攢鈹€ context/            # Context providers
+鈹?  鈹?  鈹斺攢鈹€ services/           # API services
+鈹?  鈹溾攢鈹€ public/                 # Public assets
+鈹?  鈹溾攢鈹€ index.html              # HTML entry point
+鈹?  鈹溾攢鈹€ vite.config.js          # Vite configuration
+鈹?  鈹溾攢鈹€ package.json            # Node dependencies
+鈹?  鈹斺攢鈹€ .gitignore
+鈹溾攢鈹€ src/
+鈹?  鈹斺攢鈹€ main/
+鈹?      鈹溾攢鈹€ java/               # Spring Boot backend
+鈹?      鈹斺攢鈹€ resources/
+鈹?          鈹斺攢鈹€ static/         # Production build output (auto-generated)
+鈹斺攢鈹€ pom.xml
 ```
 
 ## Setup Instructions
@@ -82,8 +82,8 @@ From your Spring Boot project root:
 ```bash
 # Create React project with Vite.
 # Two prompts must be silenced in non-interactive shells (CI, agents):
-#   1. npm's "Ok to proceed?" prompt → `-y` BEFORE the package name (or `--yes` with npx)
-#   2. create-vite 8.x's own prompts (e.g. "Use rolldown-vite?") → close stdin with `echo |`
+#   1. npm's "Ok to proceed?" prompt 鈫?`-y` BEFORE the package name (or `--yes` with npx)
+#   2. create-vite 8.x's own prompts (e.g. "Use rolldown-vite?") 鈫?close stdin with `echo |`
 # Without `echo |` the command still hangs in non-TTY shells even with `-y`.
 echo | npx --yes create-vite@latest frontend --template react
 
@@ -95,7 +95,7 @@ npm install
 
 # Install React Router, Bootstrap and Bootstrap Icons
 # React Router 8 removed the `react-router-dom` package: install `react-router` instead
-npm install react-router bootstrap@5.3.8 bootstrap-icons@1.13.1
+npm install react-router bootstrap@5.3.3 bootstrap-icons@1.11.3
 ```
 
 ### 2. Configure Vite for Spring Boot Integration
@@ -146,7 +146,7 @@ export default defineConfig(({ mode }) => {
 })
 ```
 
-> Note: in Vite 8 the esbuild integration was made optional — `minify: 'esbuild'`
+> Note: in Vite 8 the esbuild integration was made optional 鈥?`minify: 'esbuild'`
 > and the `esbuild: { pure: [...] }` block now require a separate `esbuild` install
 > (`npm i -D esbuild`). The default minifier in Vite 8 (Rolldown-based) works out
 > of the box, so this template omits both to keep the dependency list minimal.
@@ -184,8 +184,8 @@ Add to your `pom.xml`:
                         <goal>install-node-and-npm</goal>
                     </goals>
                     <configuration>
-                        <nodeVersion>v24.21.0</nodeVersion>
-                        <npmVersion>11.20.0</npmVersion>
+                        <nodeVersion>v22.14.0</nodeVersion>
+                        <npmVersion>10.9.2</npmVersion>
                     </configuration>
                 </execution>
                 
@@ -623,7 +623,7 @@ export default function HomePage() {
         <div className="col-lg-8 mx-auto">
           <h1 className="display-4">Welcome to Spring Boot</h1>
           <p className="lead">
-            A modern web application built with Spring Boot and React 19.
+            A modern web application built with Spring Boot and React 18.
           </p>
 
           <div className="card mt-4">
@@ -842,7 +842,7 @@ export default function ItemDetailPage() {
 
 ## Spring Boot SPA Controller
 
-To support React Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths — keeping proper JSON 404s for `/api/**` and `/actuator/**`:
+To support React Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths 鈥?keeping proper JSON 404s for `/api/**` and `/actuator/**`:
 
 ```java
 package com.example.demo.controller;
@@ -952,14 +952,14 @@ This approach ensures that refreshing the browser on any React route (e.g., `/it
 
 ### 6. Performance
 
-- **Route-level code splitting** — use `React.lazy` + `<Suspense>` for page components:
+- **Route-level code splitting** 鈥?use `React.lazy` + `<Suspense>` for page components:
   ```jsx
   const ItemsPage = React.lazy(() => import('./pages/ItemsPage'))
   // wrap <Routes> in <Suspense fallback={<Spinner />}>
   ```
-- **Memoization** — `React.memo`, `useMemo`, `useCallback` for components and values that are expensive to compute *and* rendered often. Don't wrap everything; unnecessary memoization costs more than it saves.
-- **Production build** — ship the bundle produced by `./mvnw package` (or `npm run build`). Vite applies minification, tree shaking, and content-hashed filenames.
-- **Long-term asset caching** — hashed `/assets/**` files are safe to cache for a year. Configure `Cache-Control` on the Spring side (see `references/SPRING-BOOT-4.md` → Performance → Static resource caching). Keep `index.html` uncached.
+- **Memoization** 鈥?`React.memo`, `useMemo`, `useCallback` for components and values that are expensive to compute *and* rendered often. Don't wrap everything; unnecessary memoization costs more than it saves.
+- **Production build** 鈥?ship the bundle produced by `./mvnw package` (or `npm run build`). Vite applies minification, tree shaking, and content-hashed filenames.
+- **Long-term asset caching** 鈥?hashed `/assets/**` files are safe to cache for a year. Configure `Cache-Control` on the Spring side (see `references/SPRING-BOOT-3.md` 鈫?Performance 鈫?Static resource caching). Keep `index.html` uncached.
 
 ### 7. Development Workflow
 

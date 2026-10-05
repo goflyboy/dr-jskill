@@ -1,4 +1,4 @@
-# Front-End Development with Angular for Spring Boot Applications
+﻿# Front-End Development with Angular for Spring Boot Applications
 
 ## Contents
 - [Overview](#overview)
@@ -15,7 +15,7 @@
 - [Additional Resources](#additional-resources)
 
 ## Overview
-This guide covers creating front-end applications for Spring Boot using Angular 22 and Angular CLI, with hot reload during development and optimized production builds integrated into the Spring Boot package.
+This guide covers creating front-end applications for Spring Boot using Angular 18 and Angular CLI, with hot reload during development and optimized production builds integrated into the Spring Boot package.
 
 ## Versions (managed via `versions.json`)
 
@@ -24,10 +24,10 @@ This guide covers creating front-end applications for Spring Boot using Angular 
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| Node.js | 24.21.0 |
-| npm | 11.20.0 |
-| Angular | 22.x |
-| Angular Router | 22.x |
+| Node.js | 22.14.0 |
+| npm | 10.9.2 |
+| Angular | 18.x |
+| Angular Router | 18.x |
 <!-- versions:end -->
 
 > Use `npx @angular/cli@latest` to scaffold; keep alignment with `engines` constraints. No OpenAPI client generation provided.
@@ -50,29 +50,29 @@ This guide covers creating front-end applications for Spring Boot using Angular 
 
 ```
 my-spring-boot-app/
-├── frontend/                    # Angular application
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── app.component.ts     # Root component
-│   │   │   ├── app.component.html   # Root template
-│   │   │   ├── app.routes.ts        # Routing configuration
-│   │   │   ├── components/          # Shared components
-│   │   │   ├── pages/               # Page components
-│   │   │   ├── services/            # Services and API calls
-│   │   │   └── models/              # TypeScript interfaces
-│   │   ├── index.html               # HTML entry point
-│   │   ├── main.ts                  # Angular bootstrap
-│   │   └── styles.css               # Global styles
-│   ├── angular.json                 # Angular configuration
-│   ├── package.json                 # Node dependencies
-│   ├── tsconfig.json                # TypeScript config
-│   └── .gitignore
-├── src/
-│   └── main/
-│       ├── java/                    # Spring Boot backend
-│       └── resources/
-│           └── static/              # Production build output (auto-generated)
-└── pom.xml
+鈹溾攢鈹€ frontend/                    # Angular application
+鈹?  鈹溾攢鈹€ src/
+鈹?  鈹?  鈹溾攢鈹€ app/
+鈹?  鈹?  鈹?  鈹溾攢鈹€ app.component.ts     # Root component
+鈹?  鈹?  鈹?  鈹溾攢鈹€ app.component.html   # Root template
+鈹?  鈹?  鈹?  鈹溾攢鈹€ app.routes.ts        # Routing configuration
+鈹?  鈹?  鈹?  鈹溾攢鈹€ components/          # Shared components
+鈹?  鈹?  鈹?  鈹溾攢鈹€ pages/               # Page components
+鈹?  鈹?  鈹?  鈹溾攢鈹€ services/            # Services and API calls
+鈹?  鈹?  鈹?  鈹斺攢鈹€ models/              # TypeScript interfaces
+鈹?  鈹?  鈹溾攢鈹€ index.html               # HTML entry point
+鈹?  鈹?  鈹溾攢鈹€ main.ts                  # Angular bootstrap
+鈹?  鈹?  鈹斺攢鈹€ styles.css               # Global styles
+鈹?  鈹溾攢鈹€ angular.json                 # Angular configuration
+鈹?  鈹溾攢鈹€ package.json                 # Node dependencies
+鈹?  鈹溾攢鈹€ tsconfig.json                # TypeScript config
+鈹?  鈹斺攢鈹€ .gitignore
+鈹溾攢鈹€ src/
+鈹?  鈹斺攢鈹€ main/
+鈹?      鈹溾攢鈹€ java/                    # Spring Boot backend
+鈹?      鈹斺攢鈹€ resources/
+鈹?          鈹斺攢鈹€ static/              # Production build output (auto-generated)
+鈹斺攢鈹€ pom.xml
 ```
 
 ## Setup Instructions
@@ -94,14 +94,14 @@ cd frontend
 npm install
 
 # Install Bootstrap and Bootstrap Icons
-npm install bootstrap@5.3.8 bootstrap-icons@1.13.1
+npm install bootstrap@5.3.3 bootstrap-icons@1.11.3
 ```
 
 > Interactive shells can use the shorter form `ng new frontend --style=css --ssr=false --skip-git` (after `npm install -g @angular/cli@22`).
 
 ### 2. Configure Angular for Spring Boot Integration
 
-Update `frontend/angular.json` - modify the `build` section. Angular 22's default builder is `@angular/build:application` (migrated from the older `@angular-devkit/build-angular:application`). When `outputPath` is a plain string it writes to `<outputPath>/browser/`; use the object form with `"browser": ""` to flatten the output so `index.html` lands directly in `src/main/resources/static/`, and use the `browser` key for the entry point:
+Update `frontend/angular.json` - modify the `build` section. Angular 18's default builder is `@angular/build:application` (migrated from the older `@angular-devkit/build-angular:application`). When `outputPath` is a plain string it writes to `<outputPath>/browser/`; use the object form with `"browser": ""` to flatten the output so `index.html` lands directly in `src/main/resources/static/`, and use the `browser` key for the entry point:
 
 ```json
 {
@@ -211,8 +211,8 @@ Add to your `pom.xml`:
                         <goal>install-node-and-npm</goal>
                     </goals>
                     <configuration>
-                        <nodeVersion>v24.21.0</nodeVersion>
-                        <npmVersion>11.20.0</npmVersion>
+                        <nodeVersion>v22.14.0</nodeVersion>
+                        <npmVersion>10.9.2</npmVersion>
                     </configuration>
                 </execution>
                 
@@ -556,7 +556,7 @@ import { Component } from '@angular/core';
         <div class="col-lg-8 mx-auto">
           <h1 class="display-4">Welcome to Spring Boot</h1>
           <p class="lead">
-            A modern web application built with Spring Boot and Angular 22.
+            A modern web application built with Spring Boot and Angular 18.
           </p>
 
           <div class="card mt-4">
@@ -840,7 +840,7 @@ bootstrapApplication(AppComponent, appConfig)
 
 ## Spring Boot SPA Controller
 
-To support Angular Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths — keeping proper JSON 404s for `/api/**` and `/actuator/**`:
+To support Angular Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths 鈥?keeping proper JSON 404s for `/api/**` and `/actuator/**`:
 
 ```java
 package com.example.demo.controller;
@@ -950,15 +950,15 @@ This approach ensures that refreshing the browser on any Angular route (e.g., `/
 
 ### 6. Performance
 
-- **Lazy-loaded routes** — use `loadComponent` (standalone components) in `app.routes.ts`:
+- **Lazy-loaded routes** 鈥?use `loadComponent` (standalone components) in `app.routes.ts`:
   ```typescript
   { path: 'items', loadComponent: () => import('./pages/items/items.component').then(m => m.ItemsComponent) }
   ```
-- **OnPush change detection** — set `changeDetection: ChangeDetectionStrategy.OnPush` on components that render from immutable inputs or signals. Drastically cuts dirty-checking cost.
-- **`@for` with `track`** — always provide a `track` expression in `@for` (or `trackBy` with `*ngFor`) so Angular reuses DOM nodes.
-- **Signals over `async` pipes on hot paths** — signals skip the zone roundtrip and integrate cleanly with OnPush.
-- **Production build** — `./mvnw package` runs `ng build --configuration production`, which enables AOT, minification, tree shaking, and file hashing.
-- **Long-term asset caching** — hashed output is safe to cache for a year; configure `Cache-Control` on the Spring side (see `references/SPRING-BOOT-4.md` → Performance → Static resource caching). Keep `index.html` uncached.
+- **OnPush change detection** 鈥?set `changeDetection: ChangeDetectionStrategy.OnPush` on components that render from immutable inputs or signals. Drastically cuts dirty-checking cost.
+- **`@for` with `track`** 鈥?always provide a `track` expression in `@for` (or `trackBy` with `*ngFor`) so Angular reuses DOM nodes.
+- **Signals over `async` pipes on hot paths** 鈥?signals skip the zone roundtrip and integrate cleanly with OnPush.
+- **Production build** 鈥?`./mvnw package` runs `ng build --configuration production`, which enables AOT, minification, tree shaking, and file hashing.
+- **Long-term asset caching** 鈥?hashed output is safe to cache for a year; configure `Cache-Control` on the Spring side (see `references/SPRING-BOOT-3.md` 鈫?Performance 鈫?Static resource caching). Keep `index.html` uncached.
 
 ### 7. Development Workflow
 

@@ -14,13 +14,13 @@ features:
   - title: Automated project generation
     details: Generate a complete Spring Boot project from start.spring.io with a single prompt — no boilerplate, no manual wiring.
   - title: Latest Spring Boot and Java
-    details: Always targets the latest Spring Boot 4.x and Java 25, with versions centralised in versions.json so the whole stack stays current.
+    details: Always targets the latest Spring Boot 3.x and Java 21, with versions centralised in versions.json so the whole stack stays current.
   - title: Multiple front-ends
     details: Choose Vue.js (default), React, Angular, or Vanilla JS, served straight from the Spring Boot application — no separate frontend deployment.
   - title: Docker and native image ready
-    details: Standard JVM images and GraalVM native image builds, with PostgreSQL auto-started in a container for local development.
+    details: Standard JVM images and GraalVM native image builds, with MySQL auto-started in a container for local development.
   - title: Production-ready by default
-    details: PostgreSQL with Hibernate ddl-auto, REST APIs, monitoring, security, and testing recipes baked into every generated project.
+    details: MySQL with Hibernate ddl-auto, REST APIs, monitoring, security, and testing recipes baked into every generated project.
   - title: Built on JHipster experience
     details: Distils years of JHipster experience into an AI-agent skill — versatile, easy to tune, and able to update existing projects.
 footer: Apache-2.0 Licensed | Dr JSkill
@@ -44,9 +44,9 @@ Dr JSkill is an [Agent Skill](https://agentskills.io): a set of Markdown instruc
 
 Ask the agent for an app and it produces a project that includes:
 
-- A **Spring Boot 4 + Java 25** backend wired to **PostgreSQL** with Hibernate `ddl-auto` schema management.
+- A **Spring Boot 3 + Java 21** backend wired to **MySQL** with Hibernate `ddl-auto` schema management.
 - A **REST API** and your choice of front-end (**Vue.js**, **React**, **Angular**, or **Vanilla JS**) served by the same application.
-- **Docker** for local development, with Postgres auto-started in a container, plus standard and **GraalVM native image** builds.
+- **Docker** for local development, with MySQL auto-started in a container, plus standard and **GraalVM native image** builds.
 - Production-shaped defaults: configuration, logging, security, testing, and monitoring — no Lombok, **Maven only**.
 - Shipped dotfiles (`.gitignore`, `.env.sample`, `.editorconfig`, `.gitattributes`, `.dockerignore`) so the project is ready to commit.
 

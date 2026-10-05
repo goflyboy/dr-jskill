@@ -2,7 +2,7 @@
 #
 # Multi-stage GraalVM native-image Dockerfile for a Spring Boot application.
 #
-# Requires GraalVM 25+ for Spring Boot 4 (GraalVM 25 = JDK 25).
+# Requires GraalVM 21+ for Spring Boot 4 (GraalVM 21 = JDK 21).
 #
 # The native executable is built "mostly static" (everything statically linked
 # except glibc), so the runtime image only needs a glibc base and no extra shared
@@ -21,8 +21,8 @@
 #   docker build -f Dockerfile-native -t my-spring-app-native .
 #   docker run --rm -e SPRING_BOOT_PORT=8080 -p 8080:8080 my-spring-app-native
 
-# Build stage with GraalVM 25 (includes native-image toolchain, JDK 25).
-FROM ghcr.io/graalvm/graalvm-community:25 AS build
+# Build stage with GraalVM 21 (includes native-image toolchain, JDK 21).
+FROM ghcr.io/graalvm/graalvm-community:21 AS build
 
 # Front-end build mirrors — see the comment in `Dockerfile` for the full explanation.
 # NPM_CONFIG_REGISTRY alone does not redirect the Node/npm binary downloads.

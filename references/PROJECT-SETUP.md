@@ -23,9 +23,9 @@
 - **.editorconfig** → enforce indentation, charset, LF endings, trim trailing whitespace
 - **.gitattributes** → normalize line endings, mark binary files, improve diffs
 - **.dockerignore** → keep Docker build context lean; exclude `target/`, `node_modules/`, `.git/`, etc.
-- **.devcontainer/** (optional) → reproducible Dev Container with Java 25, Node 24, PostgreSQL
+- **.devcontainer/** (optional) → reproducible Dev Container with Java 21, Node 22, MySQL
 - **.vscode/** (optional) → recommended extensions/settings (Java, Spring, YAML, Docker)
-- **.nvmrc / .node-version** (optional) → pin Node 24.x for front-end builds
+- **.nvmrc / .node-version** (optional) → pin Node 22.x for front-end builds
 - **GitHub remote** (optional, recommended) → unlock GHCR, CI/CD, OIDC deploy to Azure
 
 ---
@@ -123,11 +123,11 @@ SPRING_PROFILES_ACTIVE=dev
 # Local ports (override per Git worktree when needed)
 SPRING_BOOT_PORT=8080
 VITE_PORT=5173
-POSTGRES_PORT=5432
+MYSQL_PORT=3306
 COMPOSE_PROJECT_NAME=my-spring-boot-app
 
-# Database (PostgreSQL)
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:${POSTGRES_PORT}/mydb
+# Database (MySQL)
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:${MYSQL_PORT}/mydb
 SPRING_DATASOURCE_USERNAME=user
 SPRING_DATASOURCE_PASSWORD=change-me
 
@@ -246,14 +246,14 @@ coverage
 
 ## DevContainer Setup
 
-A [Dev Container](https://containers.dev/) gives every contributor the same pre-configured environment — Java 25, Node 24, Maven, Docker-in-Docker, and a PostgreSQL sidecar — without installing anything locally beyond VS Code / GitHub Codespaces.
+A [Dev Container](https://containers.dev/) gives every contributor the same pre-configured environment — Java 21, Node 22, Maven, Docker-in-Docker, and a MySQL sidecar — without installing anything locally beyond VS Code / GitHub Codespaces.
 
 The skill ships two files in `assets/devcontainer/`; the generator copies them to `.devcontainer/` in the project root.
 
 ### `.devcontainer/devcontainer.json`
 
 ```jsonc
-// Dev Container configuration for Spring Boot + optional front-end + PostgreSQL.
+// Dev Container configuration for Spring Boot + optional front-end + MySQL.
 {
     "name": "Spring Boot Dev Environment",
     "dockerComposeFile": "docker-compose.yml",
@@ -296,11 +296,11 @@ The skill ships two files in `assets/devcontainer/`; the generator copies them t
     // Default forwarded ports. Worktree-specific ports from .env are picked up
     // by Docker Compose and Spring Boot; editors can auto-forward additional
     // ports when they start listening.
-    "forwardPorts": [8080, 5173, 5432],
+    "forwardPorts": [8080, 5173, 3306],
     "portsAttributes": {
         "8080": { "label": "Spring Boot",   "onAutoForward": "notify" },
         "5173": { "label": "Vite Dev Server","onAutoForward": "silent" },
-        "5432": { "label": "PostgreSQL",     "onAutoForward": "silent" }
+        "3306": { "label": "MySQL",     "onAutoForward": "silent" }
     },
 
     "remoteUser": "vscode"
@@ -311,12 +311,12 @@ The skill ships two files in `assets/devcontainer/`; the generator copies them t
 
 | Setting | Why |
 |---------|-----|
-| `dockerComposeFile` | Lets the container depend on a PostgreSQL service instead of requiring `spring-boot-docker-compose` to start one |
+| `dockerComposeFile` | Lets the container depend on a MySQL service instead of requiring `spring-boot-docker-compose` to start one |
 | `features/java` | Installs Eclipse Temurin 25 + Maven wrapper support |
-| `features/node` | Installs Node 24 so `npm run dev` works for the front-end |
+| `features/node` | Installs Node 22 so `npm run dev` works for the front-end |
 | `features/docker-in-docker` | Lets Testcontainers and `docker build` work inside the container |
 | `postCreateCommand` | Pre-fetches Maven dependencies so the first build is fast |
-| `forwardPorts` | Exposes the Spring Boot app (8080), Vite dev server (5173), and PostgreSQL (5432) |
+| `forwardPorts` | Exposes the Spring Boot app (8080), Vite dev server (5173), and MySQL (3306) |
 
 ### `.devcontainer/docker-compose.yml`
 
@@ -328,52 +328,52 @@ services:
       - ..:/workspaces/${localWorkspaceFolderBasename}:cached
     command: sleep infinity
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
 
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     restart: unless-stopped
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "user"]
+      test: ["CMD", "mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD", "-U", "user"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - mysql_data:/var/lib/mysql
 
 volumes:
-  postgres_data:
+  mysql_data:
 ```
 
-The `postgres` service mirrors the project's root `compose.yaml` so credentials stay consistent. The `app` service is a lightweight Ubuntu container that Dev Container features layer onto.
+The `mysql` service mirrors the project's root `compose.yaml` so credentials stay consistent. The `app` service is a lightweight Ubuntu container that Dev Container features layer onto.
 
 ### Customising the DevContainer
 
-- **No database needed?** Remove the `postgres` service from `docker-compose.yml`, remove `depends_on` from `app`, and delete port `5432` from `forwardPorts`.
+- **No database needed?** Remove the `mysql` service from `docker-compose.yml`, remove `depends_on` from `app`, and delete port `3306` from `forwardPorts`.
 - **No front-end?** Remove the `features/node` block and port `5173`.
 - **Add Redis, Kafka, etc.?** Add the service to `docker-compose.yml` and a matching `forwardPorts` entry.
 - **GitHub Codespaces**: works out of the box — push `.devcontainer/` and open the repo in Codespaces.
 
 ### Connecting the app to the DevContainer database
 
-Because the `postgres` service runs as a sibling Docker Compose service, the app connects via the configured local PostgreSQL port. Use these properties so `.env` is loaded automatically and Git worktrees can override ports:
+Because the `mysql` service runs as a sibling Docker Compose service, the app connects via the configured local MySQL port. Use these properties so `.env` is loaded automatically and Git worktrees can override ports:
 
 ```properties
 spring.config.import=optional:file:.env[.properties]
 server.port=${SPRING_BOOT_PORT:8080}
-spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${POSTGRES_PORT:5432}/mydb}
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:${MYSQL_PORT:3306}/mydb}
 spring.datasource.username=${SPRING_DATASOURCE_USERNAME:user}
 spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:password}
 ```
 
-> **Tip:** With `spring-boot-docker-compose` enabled, Spring Boot may try to start *another* PostgreSQL container from the project root `compose.yaml`. To avoid duplication inside the DevContainer, set `spring.docker.compose.enabled=false` in a `dev` profile or pass `-Dspring.docker.compose.enabled=false`.
+> **Tip:** With `spring-boot-docker-compose` enabled, Spring Boot may try to start *another* MySQL container from the project root `compose.yaml`. To avoid duplication inside the DevContainer, set `spring.docker.compose.enabled=false` in a `dev` profile or pass `-Dspring.docker.compose.enabled=false`.
 
 ---
 
@@ -393,7 +393,7 @@ spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:password}
   }
   ```
 - **`.vscode/settings.json`**: enable format-on-save, set Java code style, Prettier, ESLint, files.eol = "\n".
-- **`.nvmrc` / `.node-version`**: set `24.21.0` (kept in `versions.json`).
+- **`.nvmrc` / `.node-version`**: set `22.14.0` (kept in `versions.json`).
 - **`.mvn/wrapper`**: already provided by start.spring.io; keep `mvnw` executable.
 - **`.prettierignore` / `.eslintignore`** (if front-end added): ignore generated assets and `target/`.
 - **`.testcontainers.properties`** (optional): tune reuse, Docker host, etc. Keep it **ignored** if it contains sensitive overrides.

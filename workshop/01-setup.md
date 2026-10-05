@@ -12,7 +12,7 @@ Everything you install here is reusable well beyond this workshop. None of it is
 
 ## 1. Install the prerequisites
 
-### 1.1 Node.js 24 and npm 11
+### 1.1 Node.js 22 and npm 11
 
 The generated front-end (Vue.js) needs Node.js to install dependencies and build the production bundle.
 
@@ -41,9 +41,9 @@ node --version   # should print v24.x.x
 npm --version    # should print 11.x.x
 ```
 
-### 1.2 Java 25
+### 1.2 Java 21
 
-Spring Boot 4 itself requires Java 17 or later, but Dr JSkill targets **Java 25** — it is the
+Spring Boot 3 itself requires Java 17 or later, but Dr JSkill targets **Java 21** — it is the
 current LTS, and the generated projects set `<java.version>25</java.version>`. A newer JDK
 also works; anything older than 25 will fail to build the generated project.
 
@@ -73,7 +73,7 @@ java --version   # should show "openjdk 25.x.x" or similar
 
 ### 1.3 Docker
 
-Docker runs PostgreSQL and later your packaged application in containers.
+Docker runs MySQL and later your packaged application in containers.
 
 - **macOS / Windows:** install [Docker Desktop](https://www.docker.com/products/docker-desktop/). Start it — the Docker whale must be in your menu bar.
 - **Linux:** follow the [official install guide](https://docs.docker.com/engine/install/) for your distro, then `sudo systemctl start docker`.

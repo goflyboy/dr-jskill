@@ -1,4 +1,4 @@
-# 07 — Performance
+﻿# 07 鈥?Performance
 
 **In this chapter:**
 - Apply a handful of **high-leverage performance recipes** from the Dr JSkill references
@@ -11,9 +11,9 @@ This is the shortest possible tour of a big topic. The goal is to know the knobs
 
 ## 1. The rule: measure first
 
-Every tip in this chapter is ineffective — or worse — if applied blindly. Before you optimize anything:
+Every tip in this chapter is ineffective 鈥?or worse 鈥?if applied blindly. Before you optimize anything:
 
-1. **Define what "slow" means for you** — page load time, API latency, database query time, startup time? Pick one.
+1. **Define what "slow" means for you** 鈥?page load time, API latency, database query time, startup time? Pick one.
 2. **Measure the current number.**
 3. **Change one thing.**
 4. **Measure again.**
@@ -30,13 +30,13 @@ Enable Spring Boot Actuator for performance work:
 - Expose the metrics and httpexchanges endpoints on /actuator
 - Add micrometer-registry-prometheus so the prometheus endpoint exists, and
   expose it too
-- httpexchanges needs an in-memory HttpExchangeRepository bean — add one
+- httpexchanges needs an in-memory HttpExchangeRepository bean 鈥?add one
 - Add percentiles-histogram for http.server.requests
-- Do NOT expose actuator endpoints publicly in production — add a comment
+- Do NOT expose actuator endpoints publicly in production 鈥?add a comment
   reminding this, and make the exposure dev-profile only.
 ```
 
-> **Two endpoints need more than an exposure property.** Listing an endpoint in `management.endpoints.web.exposure.include` only *un-hides* it — it doesn't create it:
+> **Two endpoints need more than an exposure property.** Listing an endpoint in `management.endpoints.web.exposure.include` only *un-hides* it 鈥?it doesn't create it:
 >
 > - **`prometheus`** requires the `micrometer-registry-prometheus` dependency, which the generated project doesn't ship.
 > - **`httpexchanges`** requires an `HttpExchangeRepository` bean; Spring Boot deliberately auto-configures none, because keeping request traces in memory is a memory leak waiting to happen in production.
@@ -62,7 +62,7 @@ for i in {1..50}; do curl -s http://localhost:8080/api/todos > /dev/null; done
 curl -s http://localhost:8080/actuator/metrics/http.server.requests | jq .
 ```
 
-This returns `COUNT`, `TOTAL_TIME` and `MAX` — not percentiles. The
+This returns `COUNT`, `TOTAL_TIME` and `MAX` 鈥?not percentiles. The
 `percentiles-histogram` property exports histogram *buckets* to a registry such as
 Prometheus; it does not add percentile measurements to this endpoint. For percentiles,
 scrape `/actuator/prometheus` (see section 2 for the dependency it needs) and read the
@@ -72,7 +72,7 @@ You now have a baseline.
 
 ## 3. Virtual threads
 
-Virtual threads (JDK 21+, on by default on JDK 25) are Spring Boot's lowest-cost performance win for IO-bound endpoints — which every typical web app is.
+Virtual threads (JDK 21+, on by default on JDK 21) are Spring Boot's lowest-cost performance win for IO-bound endpoints 鈥?which every typical web app is.
 
 ```
 Enable virtual threads for request handling. Add
@@ -81,7 +81,7 @@ spring.threads.virtual.enabled=true to application.properties.
 
 One line of config, potentially many requests per second more. Rerun the load script, compare latency.
 
-See [`references/SPRING-BOOT-4.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-4.md#performance) → *Virtual threads* for caveats (don't also raise `server.tomcat.threads.max`, avoid `synchronized` on blocking paths).
+See [`references/SPRING-BOOT-3.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-3.md#performance) 鈫?*Virtual threads* for caveats (don't also raise `server.tomcat.threads.max`, avoid `synchronized` on blocking paths).
 
 ## 4. HTTP compression
 
@@ -100,7 +100,7 @@ curl -s -I -H 'Accept-Encoding: gzip' http://localhost:8080/api/todos
 
 Look for `Content-Encoding: gzip` in the response headers.
 
-> **Don't panic if it's absent.** `min-response-size=1KB` means small responses are sent uncompressed on purpose, and a fresh todo list is a few hundred bytes at most — so the header genuinely won't be there. Check the size first, and add rows until you're over the threshold:
+> **Don't panic if it's absent.** `min-response-size=1KB` means small responses are sent uncompressed on purpose, and a fresh todo list is a few hundred bytes at most 鈥?so the header genuinely won't be there. Check the size first, and add rows until you're over the threshold:
 >
 > ```bash
 > curl -s http://localhost:8080/api/todos | wc -c   # needs to exceed 1024
@@ -108,9 +108,9 @@ Look for `Content-Encoding: gzip` in the response headers.
 
 ## 5. Read-only transactions
 
-Service methods that only query the database should declare themselves read-only — Hibernate skips dirty-checking and auto-flush, which is a measurable win on list endpoints.
+Service methods that only query the database should declare themselves read-only 鈥?Hibernate skips dirty-checking and auto-flush, which is a measurable win on list endpoints.
 
-This is also the point where a service layer starts to earn its keep. If your generated project has the controller calling the repository directly (the Dr JSkill default for plain CRUD — see Chapter 3), introduce the layer now:
+This is also the point where a service layer starts to earn its keep. If your generated project has the controller calling the repository directly (the Dr JSkill default for plain CRUD 鈥?see Chapter 3), introduce the layer now:
 
 ```
 Extract a TodoService between TodoController and TodoRepository, and mark the
@@ -125,7 +125,7 @@ See [`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/re
 
 The first page load ships the entire front-end bundle by default. Route-level code splitting keeps the initial bundle tiny and loads the rest on demand.
 
-Check whether you already have it — after a build, look for more than one JS chunk:
+Check whether you already have it 鈥?after a build, look for more than one JS chunk:
 
 ```bash
 ls src/main/resources/static/assets/*.js
@@ -138,25 +138,25 @@ In frontend/src/router/index.js (or index.ts), convert every route's component t
 import: component: () => import('../views/SomeView.vue')
 ```
 
-After rebuilding, open your browser's DevTools → Network tab → hard-refresh the page. You should see one small initial chunk and separate chunks per route.
+After rebuilding, open your browser's DevTools 鈫?Network tab 鈫?hard-refresh the page. You should see one small initial chunk and separate chunks per route.
 
 See [`references/VUE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/VUE.md#6-performance) for the full checklist (Vite prod build, long-term caching).
 
 ## 7. Static asset caching
 
-Vite emits hashed filenames in `/assets/**`. Those files will never change contents under their own hash — perfect for aggressive caching. `index.html`, on the other hand, must **never** be cached: it's the file that points at the current asset hashes.
+Vite emits hashed filenames in `/assets/**`. Those files will never change contents under their own hash 鈥?perfect for aggressive caching. `index.html`, on the other hand, must **never** be cached: it's the file that points at the current asset hashes.
 
 The obvious-looking property pair doesn't achieve that:
 
 ```properties
-# ⚠️ Don't do this
+# 鈿狅笍 Don't do this
 spring.web.resources.cache.cachecontrol.max-age=365d
 spring.web.resources.cache.cachecontrol.immutable=true
 ```
 
 Two problems, both silent:
 
-1. **There is no `immutable` property.** Spring Boot supports `max-age`, `no-cache`, `no-store`, `must-revalidate`, `no-transform`, `cache-public`, `cache-private`, `proxy-revalidate`, `s-max-age`, `stale-while-revalidate` and `stale-if-error` — that's the whole list. `immutable` is ignored without warning.
+1. **There is no `immutable` property.** Spring Boot supports `max-age`, `no-cache`, `no-store`, `must-revalidate`, `no-transform`, `cache-public`, `cache-private`, `proxy-revalidate`, `s-max-age`, `stale-while-revalidate` and `stale-if-error` 鈥?that's the whole list. `immutable` is ignored without warning.
 2. **It applies to every static resource, `index.html` included.** You'd be telling browsers to cache your entry point for a year, so users would keep loading stale asset hashes and never see a new deployment.
 
 Ask for the per-pattern configuration instead:
@@ -186,7 +186,7 @@ public void addResourceHandlers(ResourceHandlerRegistry registry) {
 }
 ```
 
-`CacheControl.immutable()` exists in the programmatic API even though the property doesn't — which is exactly why this has to be done in Java.
+`CacheControl.immutable()` exists in the programmatic API even though the property doesn't 鈥?which is exactly why this has to be done in Java.
 
 Verify both halves (substitute a real hashed filename from `src/main/resources/static/assets/`):
 
@@ -211,7 +211,7 @@ spring.jpa.properties.hibernate.generate_statistics=true
 
 Then assert the count directly, so an N+1 fails the build instead of hiding in a log. Note the
 `*IT` name: this test needs a real database, so it belongs in the Failsafe (`verify`) lane
-rather than the fast `./mvnw test` one — see [chapter 6](06-testing.md).
+rather than the fast `./mvnw test` one 鈥?see [chapter 6](06-testing.md).
 
 ```java
 import static org.assertj.core.api.Assertions.assertThat;
@@ -256,7 +256,7 @@ class NPlusOneDetectionIT {
 }
 ```
 
-> **Three things to get right.** `@DataJpaTest` moved in Spring Boot 4 — it is
+> **Three things to get right.** `@DataJpaTest` moved in Spring Boot 3 鈥?it is
 > `org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`, not the Boot 3
 > `org.springframework.boot.test.autoconfigure.orm.jpa` package. The
 > `spring-boot-starter-data-jpa-test` dependency it needs is already in your generated
@@ -264,13 +264,13 @@ class NPlusOneDetectionIT {
 > `AppUser`, and if your agent made it non-optional (`optional = false` / `nullable = false`,
 > which is the usual choice) then saving a todo without one fails on insert. Create a user
 > first, as above, and pass it in. Third, `new Todo("a", false, owner)` assumes the entity
-> shape from [Chapter 3](03-generated-application.md) plus that owner — if your agent
+> shape from [Chapter 3](03-generated-application.md) plus that owner 鈥?if your agent
 > generated a different constructor, or names the repository something other than
 > `AppUserRepository`, adjust the calls to match. The assertion is the part that matters.
 
 Run `./mvnw verify`. If listing N todos issues N+1 statements instead of 1, the assertion
-fails and names the problem. Fix it with `@EntityGraph` or `JOIN FETCH` — the pattern is in
-[`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md#avoiding-n1-queries) — then re-run.
+fails and names the problem. Fix it with `@EntityGraph` or `JOIN FETCH` 鈥?the pattern is in
+[`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md#avoiding-n1-queries) 鈥?then re-run.
 
 > **Why not p6spy?** A SQL-logging proxy such as `p6spy-spring-boot-starter` wraps the
 > `DataSource`, which collides with the Testcontainers `@ServiceConnection` DataSource. In
@@ -293,18 +293,18 @@ A real application needs maybe five to ten of these tweaks applied **thoughtfull
 
 | Recipe | Cost to apply | Typical upside | Reference |
 |---|---|---|---|
-| Virtual threads | 1 property | ↑ RPS on IO-bound endpoints | [`references/SPRING-BOOT-4.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-4.md) |
-| HTTP compression | 2 properties | ↓ bytes on the wire | [`references/SPRING-BOOT-4.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-4.md) |
-| Read-only transactions | 1 annotation per method | ↓ DB work on queries | [`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md) |
-| Lazy routes | 1 import per route | ↓ initial bundle | [`references/VUE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/VUE.md) |
-| Static asset caching | 1 config class | ↓ repeat requests | [`references/SPRING-BOOT-4.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-4.md) |
-| N+1 detection in tests | 1 property + 1 test | ↓ surprises in prod | [`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md) |
+| Virtual threads | 1 property | 鈫?RPS on IO-bound endpoints | [`references/SPRING-BOOT-3.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-3.md) |
+| HTTP compression | 2 properties | 鈫?bytes on the wire | [`references/SPRING-BOOT-3.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-3.md) |
+| Read-only transactions | 1 annotation per method | 鈫?DB work on queries | [`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md) |
+| Lazy routes | 1 import per route | 鈫?initial bundle | [`references/VUE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/VUE.md) |
+| Static asset caching | 1 config class | 鈫?repeat requests | [`references/SPRING-BOOT-3.md`](https://github.com/jdubois/dr-jskill/blob/main/references/SPRING-BOOT-3.md) |
+| N+1 detection in tests | 1 property + 1 test | 鈫?surprises in prod | [`references/DATABASE.md`](https://github.com/jdubois/dr-jskill/blob/main/references/DATABASE.md) |
 
 ---
 
 **Try this yourself**
 
-- *"Generate load against `/api/todos` with 1000 requests at concurrency 10 using `hey` or `ab`, and produce a before/after table around the virtual-threads change."* — Copilot CLI will install the tool and run the benchmarks for you.
+- *"Generate load against `/api/todos` with 1000 requests at concurrency 10 using `hey` or `ab`, and produce a before/after table around the virtual-threads change."* 鈥?Copilot CLI will install the tool and run the benchmarks for you.
 - *"Add a `@Transactional(readOnly = true)` to the method that lists todos by user and rerun the benchmark."*
 
 ---
@@ -317,4 +317,4 @@ A real application needs maybe five to ten of these tweaks applied **thoughtfull
 - `./mvnw verify` still green
 - Commit the combined changes: *"Apply core performance recipes"*
 
-**Next →** [Chapter 8 — Deployment](08-deployment.md)
+**Next 鈫?* [Chapter 8 鈥?Deployment](08-deployment.md)

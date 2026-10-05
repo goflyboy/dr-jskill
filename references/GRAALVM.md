@@ -5,9 +5,9 @@
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| GraalVM | 25 |
-| Java (Temurin) | 25 |
-| PostgreSQL | 18 |
+| GraalVM | 21 |
+| Java (Temurin) | 21 |
+| MySQL | 8.3.0 |
 <!-- versions:end -->
 
 Run `node scripts/sync-versions-in-docs.mjs` at the repo root to keep this
@@ -25,7 +25,7 @@ table aligned with `versions.json`.
 - [References](#references)
 
 ## Overview
-This guide covers building GraalVM native images for Spring Boot 4 applications using Docker multi-stage builds. Native images provide significantly faster startup times and lower memory footprint, making them ideal for microservices and serverless deployments.
+This guide covers building GraalVM native images for Spring Boot 3 applications using Docker multi-stage builds. Native images provide significantly faster startup times and lower memory footprint, making them ideal for microservices and serverless deployments.
 
 **Key Benefits:**
 
@@ -97,8 +97,8 @@ docker build -f Dockerfile-native -t ${ARTIFACT_ID}-native:latest .
 ## Prerequisites
 
 1. Docker installed and running (≥ 8 GB RAM allocated)
-2. Spring Boot 4 application with Maven
-3. GraalVM 25+ *(only for local builds — the Dockerfile handles this in CI and Docker builds)*
+2. Spring Boot 3 application with Maven
+3. GraalVM 21+ *(only for local builds — the Dockerfile handles this in CI and Docker builds)*
 4. Sufficient build resources (native compilation is resource-intensive)
 
 ## Docker-Based Native Builds (Recommended)
@@ -117,9 +117,9 @@ Use the `Dockerfile-native` for building native images with Docker:
 ```dockerfile
 # Multi-stage Dockerfile for GraalVM Native Image
 # Builds and runs a native Spring Boot application
-# Requires GraalVM 25+ for Spring Boot 4 (GraalVM 25 = JDK 25)
+# Requires GraalVM 21+ for Spring Boot 3 (GraalVM 21 = JDK 21)
 
-# Build stage with GraalVM 25 (includes native-image toolchain, JDK 25)
+# Build stage with GraalVM 21 (includes native-image toolchain, JDK 21)
 FROM ghcr.io/graalvm/graalvm-community:25 AS build
 
 # Set working directory
@@ -185,7 +185,7 @@ ENTRYPOINT ["./native-app"]
 
 **Key Points:**
 
-1. **Build Stage**: Uses GraalVM 25 Community Edition (Oracle Linux 9) — includes the `native-image` toolchain and JDK 25.
+1. **Build Stage**: Uses GraalVM 21 Community Edition (Oracle Linux 9) — includes the `native-image` toolchain and JDK 21.
 2. **Native Compile**: `./mvnw -Pnative -DskipTests package native:compile` invokes GraalVM's `native-image` via the `native-maven-plugin`. The explicit `package` phase is required so Spring Boot's `process-aot` goal runs first — otherwise AOT sources and native-image hints are never generated and the build fails with cryptic errors inside `native-image`.
 3. **Portable Copy**: First tries `target/<artifactId>` (the default native output), then falls back to `find` so the Dockerfile works regardless of Maven's output name.
 4. **Distroless Runtime**: Final image is `gcr.io/distroless/base-debian12` (~20 MB, glibc-based) — ships the shared libraries the native binary needs, nothing else. No shell, no package manager.
@@ -211,7 +211,7 @@ docker run -p 8080:8080 myapp-native:latest
 # With environment variables
 docker run -p 8080:8080 \
   -e SPRING_PROFILES_ACTIVE=prod \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/mydb \
+  -e SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC \
   myapp-native:latest
 ```
 
@@ -228,31 +228,31 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: user
       SPRING_DATASOURCE_PASSWORD: password
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
 
-  postgres:
-    image: postgres:18-alpine
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d mydb"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_data:
+  mysql_data:
 ```
 
 **Deploy with:**
@@ -316,7 +316,7 @@ Ensure your `pom.xml` includes the `start-class` property and the native profile
 
 ### Native Hints
 
-Most Spring Boot 4 libraries work out-of-the-box with native images. For custom reflection or resource access, use `@RegisterReflectionForBinding`:
+Most Spring Boot 3 libraries work out-of-the-box with native images. For custom reflection or resource access, use `@RegisterReflectionForBinding`:
 
 ```java
 @SpringBootApplication
@@ -448,7 +448,7 @@ with a trace pointing at `com.zaxxer.hikari.HikariConfig.<clinit>`.
 
 **Root cause.** The GraalVM reachability-metadata repository bundled with
 `native-maven-plugin` has no config for the newer library versions Spring
-Boot 4.1.1 ships (HikariCP 7.x, logback-classic 1.5.38, Jackson 3.1.x) and
+Boot 3.1.1 ships (HikariCP 7.x, logback-classic 1.5.38, Jackson 3.1.x) and
 silently falls back to stale configs for HikariCP 6.0.0 / logback 1.5.7.
 Those stale configs force `HikariConfig` to be initialized at build time,
 which calls `LoggerFactory.getLogger(...)` and pulls SLF4J's internal

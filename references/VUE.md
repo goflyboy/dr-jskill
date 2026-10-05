@@ -1,4 +1,4 @@
-# Front-End Development with Vue.js for Spring Boot Applications
+﻿# Front-End Development with Vue.js for Spring Boot Applications
 
 ## Contents
 - [Overview](#overview)
@@ -24,12 +24,12 @@ This guide covers creating front-end applications for Spring Boot using **Vue.js
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| Node.js | 24.21.0 |
-| npm | 11.20.0 |
+| Node.js | 22.14.0 |
+| npm | 10.9.2 |
 | Vue.js | 3.x |
-| Vite | 8.x |
-| Pinia | 4.x |
-| Vue Router | 5.x |
+| Vite | 5.x |
+| Pinia | 2.x |
+| Vue Router | 4.x |
 <!-- versions:end -->
 
 > Tip: `corepack enable` to use `pnpm`/`yarn` if preferred. Default instructions assume `npm`.
@@ -52,26 +52,26 @@ This guide covers creating front-end applications for Spring Boot using **Vue.js
 
 ```
 my-spring-boot-app/
-├── frontend/                    # Vue.js application
-│   ├── src/
-│   │   ├── main.js             # Vue entry point
-│   │   ├── App.vue             # Root component
-│   │   ├── components/         # Vue components
-│   │   ├── views/              # Page views
-│   │   ├── router/             # Vue Router
-│   │   ├── stores/             # Pinia stores (state management)
-│   │   └── services/           # API services
-│   ├── public/                 # Public assets
-│   ├── index.html              # HTML entry point
-│   ├── vite.config.js          # Vite configuration
-│   ├── package.json            # Node dependencies
-│   └── .gitignore
-├── src/
-│   └── main/
-│       ├── java/               # Spring Boot backend
-│       └── resources/
-│           └── static/         # Production build output (auto-generated)
-└── pom.xml
+鈹溾攢鈹€ frontend/                    # Vue.js application
+鈹?  鈹溾攢鈹€ src/
+鈹?  鈹?  鈹溾攢鈹€ main.js             # Vue entry point
+鈹?  鈹?  鈹溾攢鈹€ App.vue             # Root component
+鈹?  鈹?  鈹溾攢鈹€ components/         # Vue components
+鈹?  鈹?  鈹溾攢鈹€ views/              # Page views
+鈹?  鈹?  鈹溾攢鈹€ router/             # Vue Router
+鈹?  鈹?  鈹溾攢鈹€ stores/             # Pinia stores (state management)
+鈹?  鈹?  鈹斺攢鈹€ services/           # API services
+鈹?  鈹溾攢鈹€ public/                 # Public assets
+鈹?  鈹溾攢鈹€ index.html              # HTML entry point
+鈹?  鈹溾攢鈹€ vite.config.js          # Vite configuration
+鈹?  鈹溾攢鈹€ package.json            # Node dependencies
+鈹?  鈹斺攢鈹€ .gitignore
+鈹溾攢鈹€ src/
+鈹?  鈹斺攢鈹€ main/
+鈹?      鈹溾攢鈹€ java/               # Spring Boot backend
+鈹?      鈹斺攢鈹€ resources/
+鈹?          鈹斺攢鈹€ static/         # Production build output (auto-generated)
+鈹斺攢鈹€ pom.xml
 ```
 
 ## Setup Instructions
@@ -81,21 +81,21 @@ my-spring-boot-app/
 From your Spring Boot project root:
 
 ```bash
-# Create Vue.js project with Vite — interactive (answer the prompts yourself):
-# Note: `-y` MUST come before the package name — it tells npm to auto-accept
+# Create Vue.js project with Vite 鈥?interactive (answer the prompts yourself):
+# Note: `-y` MUST come before the package name 鈥?it tells npm to auto-accept
 # its own "Ok to proceed?" install prompt (otherwise the command hangs in
 # non-interactive shells like CI or AI agents).
 npm create -y vue@latest frontend
 
 # Follow the prompts:
-# ✔ Add TypeScript? … No
-# ✔ Add JSX Support? … No
-# ✔ Add Vue Router for Single Page Application development? … Yes
-# ✔ Add Pinia for state management? … Yes
-# ✔ Add Vitest for Unit Testing? … Yes
-# ✔ Add an End-to-End Testing Solution? › No
-# ✔ Add ESLint for code quality? … Yes
-# ✔ Add Prettier for code formatting? … Yes
+# 鉁?Add TypeScript? 鈥?No
+# 鉁?Add JSX Support? 鈥?No
+# 鉁?Add Vue Router for Single Page Application development? 鈥?Yes
+# 鉁?Add Pinia for state management? 鈥?Yes
+# 鉁?Add Vitest for Unit Testing? 鈥?Yes
+# 鉁?Add an End-to-End Testing Solution? 鈥?No
+# 鉁?Add ESLint for code quality? 鈥?Yes
+# 鉁?Add Prettier for code formatting? 鈥?Yes
 
 # Fully non-interactive alternative (skips all prompts, picks the features via flags):
 # npm create -y vue@latest frontend -- --router --pinia --vitest --eslint --prettier
@@ -104,28 +104,28 @@ cd frontend
 npm install
 
 # Install Bootstrap and Bootstrap Icons
-npm install bootstrap@5.3.8 bootstrap-icons@1.13.1
+npm install bootstrap@5.3.3 bootstrap-icons@1.11.3
 ```
 
-> **Heads-up — create-vue's oxlint dual-linter breaks `npm install`.** Recent
+> **Heads-up 鈥?create-vue's oxlint dual-linter breaks `npm install`.** Recent
 > `create-vue` scaffolds add both `oxlint` and `eslint-plugin-oxlint` as dev
 > dependencies, pinned to mismatched minors (e.g.
 > `oxlint@~1.74.0` with `eslint-plugin-oxlint@~1.73.0`, whose peer requires
 > `oxlint@~1.73.0`). This makes `npm install` fail with an `ERESOLVE` peer
-> conflict — which also fails the `frontend-maven-plugin` `npm install` step and
+> conflict 鈥?which also fails the `frontend-maven-plugin` `npm install` step and
 > therefore the **whole Maven build**.
 >
 > **Always run the normalizer immediately after scaffolding**, before the first
 > `npm install`. It drops the oxlint dual-linter, collapses linting to the
 > single ESLint pipeline this project standardizes on, and adds the `lint:check`
-> script `create-vue` never emits — the Maven build runs `npm run lint:check`,
+> script `create-vue` never emits 鈥?the Maven build runs `npm run lint:check`,
 > so without it the `frontend-maven-plugin` step fails with
 > `Missing script: "lint:check"` (see
 > [step 4](#4-update-frontend-packagejson-scripts)):
 >
 > ```bash
 > # `scripts/` lives in the Dr JSkill skill folder, NOT in your generated
-> # project — running this from the project root gives MODULE_NOT_FOUND.
+> # project 鈥?running this from the project root gives MODULE_NOT_FOUND.
 > # Easiest: ask the agent, "run the Vue normalizer on frontend/".
 > # Manually, point at the skill's copy and pass your frontend path:
 > node /path/to/dr-jskill/scripts/normalize-vue-frontend.mjs frontend
@@ -138,8 +138,8 @@ npm install bootstrap@5.3.8 bootstrap-icons@1.13.1
 > drop the `eslint-plugin-oxlint` import plus the
 > `...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json')` entry from
 > `frontend/eslint.config.js` (the TypeScript flavour of `create-vue` emits
-> `eslint.config.ts` instead — a leftover import there fails `vue-tsc`).
-> Leave `npm-run-all2` alone — the TypeScript flavour uses its `run-p` binary
+> `eslint.config.ts` instead 鈥?a leftover import there fails `vue-tsc`).
+> Leave `npm-run-all2` alone 鈥?the TypeScript flavour uses its `run-p` binary
 > in the `build` script.
 
 ### 2. Configure Vite for Spring Boot Integration
@@ -188,14 +188,14 @@ export default defineConfig(({ mode }) => {
 })
 ```
 
-> Note: in Vite 8 the esbuild integration was made optional — `minify: 'esbuild'`
+> Note: in Vite 8 the esbuild integration was made optional 鈥?`minify: 'esbuild'`
 > and the `esbuild: { pure: [...] }` block now require a separate `esbuild` install
 > (`npm i -D esbuild`). The default minifier in Vite 8 (Rolldown-based) works out
 > of the box, so this template omits both to keep the dependency list minimal.
 
 Because this Vite config exports a callback, update `frontend/vitest.config.js` so Vitest
 merges the resolved config object, not the callback itself. Also add the `.js` extension to the
-import — Vite 8 warns about extensionless config imports under the upcoming native config loader:
+import 鈥?Vite 8 warns about extensionless config imports under the upcoming native config loader:
 
 ```javascript
 import { fileURLToPath } from 'node:url'
@@ -215,7 +215,7 @@ export default mergeConfig(
 ```
 
 > **TypeScript flavour:** the file is `vitest.config.ts` and it sits next to
-> `vite.config.ts` — but keep the import specifier as `'./vite.config.js'` exactly as
+> `vite.config.ts` 鈥?but keep the import specifier as `'./vite.config.js'` exactly as
 > written above. It is a module specifier, not a filename, and TypeScript rejects the `.ts`
 > form with `TS5097: An import path can only end with a '.ts' extension when
 > 'allowImportingTsExtensions' is enabled`, which fails `vue-tsc` and therefore the Maven
@@ -254,8 +254,8 @@ Add to your `pom.xml`:
                         <goal>install-node-and-npm</goal>
                     </goals>
                     <configuration>
-                        <nodeVersion>v24.21.0</nodeVersion>
-                        <npmVersion>11.20.0</npmVersion>
+                        <nodeVersion>v22.14.0</nodeVersion>
+                        <npmVersion>10.9.2</npmVersion>
                     </configuration>
                 </execution>
                 
@@ -970,7 +970,7 @@ async function handleDelete() {
 
 ## Spring Boot SPA Controller
 
-To support Vue Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths — keeping proper JSON 404s for `/api/**` and `/actuator/**`:
+To support Vue Router with HTML5 history mode, implement an `ErrorController` that forwards 404s for non-API paths to `index.html`. This lets `ResourceHttpRequestHandler` serve static files first, lets `@RestController` mappings win naturally, and only kicks in on unmapped paths 鈥?keeping proper JSON 404s for `/api/**` and `/actuator/**`:
 
 ```java
 package com.example.demo.controller;
@@ -1080,15 +1080,15 @@ This approach ensures that refreshing the browser on any Vue.js route (e.g., `/i
 
 ### 6. Performance
 
-- **Route-level code splitting** — use dynamic `import()` in the router (already shown in the Router Configuration example). Each route becomes a separate chunk, cutting initial bundle size.
-- **Component-level lazy loading** — for heavy components rendered conditionally (charts, rich editors, modals), wrap them with `defineAsyncComponent`:
+- **Route-level code splitting** 鈥?use dynamic `import()` in the router (already shown in the Router Configuration example). Each route becomes a separate chunk, cutting initial bundle size.
+- **Component-level lazy loading** 鈥?for heavy components rendered conditionally (charts, rich editors, modals), wrap them with `defineAsyncComponent`:
   ```javascript
   import { defineAsyncComponent } from 'vue'
   const Chart = defineAsyncComponent(() => import('./Chart.vue'))
   ```
-- **Production build** — always ship the bundle produced by `./mvnw package` (or `npm run build` during dev). Vite applies minification, tree shaking, and content-hashed filenames.
-- **Long-term asset caching** — content-hashed filenames mean `/assets/**` can be served with a 1-year `Cache-Control`. Configure this on the Spring side (see `references/SPRING-BOOT-4.md` → Performance → Static resource caching).
-- **Keep `index.html` uncached** — it references the hashed asset filenames; caching it would pin clients to stale bundles.
+- **Production build** 鈥?always ship the bundle produced by `./mvnw package` (or `npm run build` during dev). Vite applies minification, tree shaking, and content-hashed filenames.
+- **Long-term asset caching** 鈥?content-hashed filenames mean `/assets/**` can be served with a 1-year `Cache-Control`. Configure this on the Spring side (see `references/SPRING-BOOT-3.md` 鈫?Performance 鈫?Static resource caching).
+- **Keep `index.html` uncached** 鈥?it references the hashed asset filenames; caching it would pin clients to stale bundles.
 
 ### 7. Development Workflow
 

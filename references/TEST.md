@@ -1,10 +1,10 @@
-# Spring Boot Testing Best Practices
+﻿# Spring Boot Testing Best Practices
 
 ## Contents
 - [Overview](#overview)
 - [Testing Dependencies](#testing-dependencies)
 - [Activate Maven Failsafe (REQUIRED for `*IT.java`)](#activate-maven-failsafe-required-for-itjava)
-- [Testcontainers 2 + @ServiceConnection quickstart](#testcontainers-2--serviceconnection-quickstart)
+- [Testcontainers 1 + @ServiceConnection quickstart](#testcontainers-2--serviceconnection-quickstart)
 - [Unit Tests with Mocks](#unit-tests-with-mocks)
 - [Integration Tests with TestContainers](#integration-tests-with-testcontainers)
 - [Test Naming Conventions](#test-naming-conventions)
@@ -13,44 +13,36 @@
 - [Running Tests](#running-tests)
 - [Security Scanning & SBOM (CI-ready)](#security-scanning--sbom-ci-ready)
 - [Additional Resources](#additional-resources)
-- [Spring Boot 4 Migration Notes](#spring-boot-4-migration-notes)
+- [Spring Boot 3 Migration Notes](#SPRING-BOOT-3-migration-notes)
 
 ## Overview
-This guide covers testing best practices for Spring Boot 4.x applications, including unit tests with mocks and integration tests with TestContainers.
+This guide covers testing best practices for Spring Boot 3.x applications, including unit tests with mocks and integration tests with TestContainers.
 
-**Spring Boot 4 Testing Changes:**
-- TestContainers 2.0+ is required (integration simplified with `@ServiceConnection`)
-- **@MockBean/@SpyBean are DEPRECATED** - use `@MockitoBean/@MockitoSpyBean` from Spring Framework instead
-- `@ServiceConnection` eliminates need for manual `@DynamicPropertySource` configuration
-- New modular test starter structure (e.g., `spring-boot-starter-webmvc-test`, `spring-boot-starter-data-jpa-test`)
-- **`@WebMvcTest` and `@AutoConfigureMockMvc` moved** to `org.springframework.boot.webmvc.test.autoconfigure` package — requires `spring-boot-starter-webmvc-test` dependency
+**Spring Boot 3.x testing notes:**
+- Testcontainers 1.19+ is used (integration simplified with `@ServiceConnection`)
+- **`@MockBean`/`@SpyBean` still work**, but `@MockitoBean`/`@MockitoSpyBean` from Spring Framework are the safer long-term choice
+- `@ServiceConnection` eliminates the need for manual `@DynamicPropertySource` configuration
+- `@WebMvcTest` and `@AutoConfigureMockMvc` are still in `org.springframework.boot.test.autoconfigure.web.servlet` and ship with `spring-boot-starter-test`. (The move to `org.springframework.boot.webmvc.test.autoconfigure` and the separate `spring-boot-starter-webmvc-test` are **Boot 4** changes.)
 
 ## Testing Dependencies
 
 Add these dependencies to your `pom.xml`:
 
-> ℹ️ start.spring.io generates `TestcontainersConfiguration` as a **package-private** class. The
-> generator makes it **public** so integration tests living in sub-packages (`controller/`,
-> `repository/`, …) can `@Import` it. `@ServiceConnection` works on a public `@TestConfiguration` —
-> keep it package-private only if all your tests sit in the same package.
+> The generator emits a **public** `TestcontainersConfiguration` so integration tests living
+> in sub-packages (`controller/`, `repository/`, …) can `@Import` it.
+> `@ServiceConnection` works on a public `@TestConfiguration` — keep it package-private only
+> if all your tests sit in the same package.
 
 ```xml
 <dependencies>
-    <!-- Spring Boot Test Starter (includes JUnit 5, Mockito, AssertJ) -->
+    <!-- Spring Boot Test Starter (includes JUnit 5, Mockito, AssertJ, @WebMvcTest) -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-test</artifactId>
         <scope>test</scope>
     </dependency>
 
-    <!-- WebMvc Test Starter (provides @WebMvcTest, @AutoConfigureMockMvc) -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-webmvc-test</artifactId>
-        <scope>test</scope>
-    </dependency>
-    
-    <!-- TestContainers 2.0+ for integration tests -->
+    <!-- Testcontainers 1.19+ for integration tests -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-testcontainers</artifactId>
@@ -59,7 +51,7 @@ Add these dependencies to your `pom.xml`:
     
     <dependency>
         <groupId>org.testcontainers</groupId>
-        <artifactId>testcontainers-postgresql</artifactId>
+        <artifactId>mysql</artifactId>
         <scope>test</scope>
     </dependency>
 </dependencies>
@@ -67,11 +59,11 @@ Add these dependencies to your `pom.xml`:
 
 ## Activate Maven Failsafe (REQUIRED for `*IT.java`)
 
-> ⚠️ **Silent failure trap.** Spring Boot's parent POM declares `maven-failsafe-plugin` under `<pluginManagement>` only. If you do **not** also declare it in `<build><plugins>`, Failsafe never runs, `./mvnw verify` reports **BUILD SUCCESS**, and every `*IT.java` integration test is silently skipped. Surefire's default includes do not pick up `*IT.java`.
+> 鈿狅笍 **Silent failure trap.** Spring Boot's parent POM declares `maven-failsafe-plugin` under `<pluginManagement>` only. If you do **not** also declare it in `<build><plugins>`, Failsafe never runs, `./mvnw verify` reports **BUILD SUCCESS**, and every `*IT.java` integration test is silently skipped. Surefire's default includes do not pick up `*IT.java`.
 >
 > Every generated project that has integration tests ending in `IT` **must** include the snippet below.
 
-Add this plugin declaration to `<build><plugins>` in `pom.xml` (no `<version>` — the Spring Boot parent manages it):
+Add this plugin declaration to `<build><plugins>` in `pom.xml` (no `<version>` 鈥?the Spring Boot parent manages it):
 
 ```xml
 <plugin>
@@ -90,18 +82,18 @@ Verify it's active by running `./mvnw verify` and checking the log for a line li
 
 If you only see `surefire:test` and no `failsafe` section, the plugin declaration is missing.
 
-## Testcontainers 2 + @ServiceConnection quickstart
+## Testcontainers 1 + @ServiceConnection quickstart
 
 ```java
 // src/test/java/.../TestcontainersConfiguration.java
-import org.testcontainers.postgresql.PostgreSQLContainer; // ✅ TC 2.x package
+import org.testcontainers.containers.MySQLContainer; // 鉁?TC 1.x package
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
   @Bean
   @ServiceConnection
-  public PostgreSQLContainer postgresContainer() {
-    return new PostgreSQLContainer("postgres:18-alpine");
+  public MySQLContainer<?> mysqlContainer() {
+    return new MySQLContainer<>("mysql:8.3.0");
   }
 }
 ```
@@ -112,7 +104,7 @@ Use `@Import(TestcontainersConfiguration.class)` or `@ImportAutoConfiguration` i
 
 Unit tests should test individual components in isolation using mocks for dependencies.
 
-**Two approaches to mocking in Spring Boot 4:**
+**Two approaches to mocking in Spring Boot 3:**
 
 1. **Pure Mockito** (for unit tests without Spring context):
    - Use `@ExtendWith(MockitoExtension.class)`
@@ -214,8 +206,7 @@ class UserServiceTest {
 
 Test controllers without loading the full application context. Uses `@MockitoBean` to mock service dependencies.
 
-> ✅ **Spring Boot 4 import:** `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`
-> ✅ **Dependency:** `spring-boot-starter-webmvc-test` (required — `spring-boot-starter-test` alone no longer provides `@WebMvcTest`). Avoid IDE auto-imports to the old `org.springframework.boot.test.autoconfigure.web.servlet` package or `org.springframework.test.web.servlet.*`.
+> **Spring Boot 3 import:** `org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest` (included in `spring-boot-starter-test`). The relocated `org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest` package and the `spring-boot-starter-webmvc-test` dependency are **Boot 4** changes.
 
 **Example: Controller Unit Test**
 
@@ -224,10 +215,10 @@ package com.example.app.controller;
 
 import com.example.app.domain.User;
 import com.example.app.service.UserService;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest; // ✅ correct package for Boot 4
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -344,21 +335,21 @@ package com.example.app;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.containers.MySQLContainer;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
 
     @Bean
     @ServiceConnection
-    public PostgreSQLContainer postgresContainer() {
-        return new PostgreSQLContainer("postgres:18-alpine");
+    public MySQLContainer<?> mysqlContainer() {
+        return new MySQLContainer<>("mysql:8.3.0");
     }
 }
 ```
 
-**Pin the image tag.** Spring Initializr emits `postgres:latest`, which makes builds
-non-reproducible. The generator rewrites it to the PostgreSQL version this skill targets.
+**Pin the image tag.** Spring Initializr emits `mysql:8.3.0`, which makes builds
+non-reproducible. The generator rewrites it to the MySQL version this skill targets.
 
 **Using TestcontainersConfiguration in tests:**
 
@@ -376,18 +367,18 @@ class UserIT {
 
     @Test
     void shouldConnectToTheDatabase() {
-        // Test with real PostgreSQL from TestContainers
+        // Test with real MySQL from TestContainers
     }
 }
 ```
 
-**Note:** With Spring Boot 4, `@ServiceConnection` automatically configures datasource properties. No need for manual `@DynamicPropertySource` configuration. TestContainers 2.0+ is required.
+**Note:** With Spring Boot 3, `@ServiceConnection` automatically configures datasource properties. No need for manual `@DynamicPropertySource` configuration. Testcontainers 1.19+ is required.
 
 ### HTTP clients in integration tests
 
-Spring Boot 4 reorganised the test HTTP clients:
+Spring Boot 3 reorganised the test HTTP clients:
 
-| Boot 3 | Boot 4 |
+| Boot 3 | Boot 3 |
 |--------|--------|
 | `org.springframework.boot.test.web.client.TestRestTemplate` | `org.springframework.boot.resttestclient.TestRestTemplate` (needs `spring-boot-resttestclient` on the classpath) |
 | auto-registered by `@SpringBootTest(webEnvironment = RANDOM_PORT)` | must be opted into with `@AutoConfigureTestRestTemplate` |
@@ -425,7 +416,7 @@ class UserIT {
 }
 ```
 
-Use it whenever the behaviour under test depends on the real servlet container — most notably the
+Use it whenever the behaviour under test depends on the real servlet container 鈥?most notably the
 SPA `ErrorController` forward, which MockMvc cannot exercise because it skips `ERROR` dispatch.
 
 ### REST API Integration Test
@@ -439,11 +430,11 @@ package com.example.app;
 
 import com.example.app.domain.User;
 import com.example.app.repository.UserRepository;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
@@ -681,7 +672,7 @@ This naming convention allows:
 - Test complete user flows and edge cases
 
 ### 4. TestContainers Configuration
-- Use lightweight PostgreSQL Alpine image (`postgres:18-alpine`)
+- Use lightweight MySQL Alpine image (`mysql:8.3.0`)
 - Share container across tests with `@Container static` field
 - Use `@ServiceConnection` for automatic Spring Boot configuration
 - Container starts once per test class, improving performance
@@ -702,7 +693,7 @@ This naming convention allows:
 
 Keep the feedback loop fast:
 
-- **Testcontainers reuse** — the generated `TestcontainersConfiguration` already calls `.withReuse(true)`, but reuse only activates when each developer opts in on their machine:
+- **Testcontainers reuse** 鈥?the generated `TestcontainersConfiguration` already calls `.withReuse(true)`, but reuse only activates when each developer opts in on their machine:
 
   ```properties
   # ~/.testcontainers.properties
@@ -711,29 +702,29 @@ Keep the feedback loop fast:
 
   Without this file, the container is still recreated every run. Document it in your project README.
 
-- **Detect slow queries early** — add `p6spy` or `datasource-proxy` (test scope) to log every SQL statement with its execution time. This catches N+1 queries and missing indexes while running integration tests, long before they hit production.
+- **Detect slow queries early** 鈥?add `p6spy` or `datasource-proxy` (test scope) to log every SQL statement with its execution time. This catches N+1 queries and missing indexes while running integration tests, long before they hit production.
 
-- **Share container across tests** — prefer a single `@ServiceConnection`-annotated container (already the pattern in `TestcontainersConfiguration`) over per-class containers.
+- **Share container across tests** 鈥?prefer a single `@ServiceConnection`-annotated container (already the pattern in `TestcontainersConfiguration`) over per-class containers.
 
-- **Split unit vs integration** — unit tests run via `./mvnw test` (no containers, milliseconds); integration tests run via `./mvnw verify` (containers, slower). Keep controllers covered by `@WebMvcTest` so they stay in the fast lane.
-- **The generated context test ships as `*IT`** — start.spring.io emits `…ApplicationTests` annotated with `@Import(TestcontainersConfiguration.class)`, which starts a real PostgreSQL container. Dr JSkill's generator renames it to `…ApplicationIT` so it runs under Failsafe instead of Surefire. The same trap applies to any repository or N+1 test you write against a container: if it is named `*Test` it lands in the fast lane and drags a container in with it. **Anything that needs a container belongs in `*IT`** — keep container-backed repository tests as `…RepositoryIT`, otherwise `./mvnw test` is neither container-free nor fast.
+- **Split unit vs integration** 鈥?unit tests run via `./mvnw test` (no containers, milliseconds); integration tests run via `./mvnw verify` (containers, slower). Keep controllers covered by `@WebMvcTest` so they stay in the fast lane.
+- **The generated context test ships as `*IT`** 鈥?start.spring.io emits `鈥pplicationTests` annotated with `@Import(TestcontainersConfiguration.class)`, which starts a real MySQL container. Dr JSkill's generator renames it to `鈥pplicationIT` so it runs under Failsafe instead of Surefire. The same trap applies to any repository or N+1 test you write against a container: if it is named `*Test` it lands in the fast lane and drags a container in with it. **Anything that needs a container belongs in `*IT`** 鈥?keep container-backed repository tests as `鈥epositoryIT`, otherwise `./mvnw test` is neither container-free nor fast.
 
 ## Example Test Structure
 
 ```
 src/test/java/
-└── com/example/app/
-    ├── TestcontainersConfiguration.java     # TestContainers config (public)
-    ├── AppApplicationIT.java                # Generated as *IT by Dr JSkill (boots a container)
-    ├── UserIntegrationIT.java               # Integration test (same package as TC config)
-    ├── UserRepositoryIT.java                # Integration test (same package as TC config)
-    ├── controller/
-    │   └── UserControllerTest.java          # Unit test with mocks (@WebMvcTest)
-    └── service/
-        └── UserServiceTest.java             # Unit test with mocks
+鈹斺攢鈹€ com/example/app/
+    鈹溾攢鈹€ TestcontainersConfiguration.java     # TestContainers config (public)
+    鈹溾攢鈹€ AppApplicationIT.java                # Generated as *IT by Dr JSkill (boots a container)
+    鈹溾攢鈹€ UserIntegrationIT.java               # Integration test (same package as TC config)
+    鈹溾攢鈹€ UserRepositoryIT.java                # Integration test (same package as TC config)
+    鈹溾攢鈹€ controller/
+    鈹?  鈹斺攢鈹€ UserControllerTest.java          # Unit test with mocks (@WebMvcTest)
+    鈹斺攢鈹€ service/
+        鈹斺攢鈹€ UserServiceTest.java             # Unit test with mocks
 ```
 
-**Note:** `TestcontainersConfiguration` is generated as `public`, so integration tests (`*IT.java`) can live in sub-packages (e.g., `controller/`, `repository/`) next to the unit tests they complement — just import it explicitly.
+**Note:** `TestcontainersConfiguration` is generated as `public`, so integration tests (`*IT.java`) can live in sub-packages (e.g., `controller/`, `repository/`) next to the unit tests they complement 鈥?just import it explicitly.
 
 ## Running Tests
 
@@ -795,17 +786,17 @@ mvn -B -DskipTests=false verify cyclonedx:makeAggregateBom dependency-check:chec
 - [TestContainers Documentation](https://testcontainers.com/)
 - [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
 
-## Spring Boot 4 Migration Notes
+## Spring Boot 3 Migration Notes
 
 ### @MockBean and @SpyBean Deprecation
 
-**Important:** Spring Boot 4 deprecates `@MockBean` and `@SpyBean` in favor of Spring Framework's `@MockitoBean` and `@MockitoSpyBean`.
+**Important:** Spring Boot 3 deprecates `@MockBean` and `@SpyBean` in favor of Spring Framework's `@MockitoBean` and `@MockitoSpyBean`.
 
 #### Key Differences
 
-**Old (Deprecated in Spring Boot 4):**
+**Old (Deprecated in Spring Boot 3):**
 ```java
-import org.springframework.boot.test.mock.mockito.MockBean;  // ❌ Deprecated
+import org.springframework.boot.test.mock.mockito.MockBean;  // 鉂?Deprecated
 
 @SpringBootTest
 class MyTest {
@@ -814,9 +805,9 @@ class MyTest {
 }
 ```
 
-**New (Spring Boot 4):**
+**New (Spring Boot 3):**
 ```java
-import org.springframework.test.context.bean.override.mockito.MockitoBean;  // ✅ Correct
+import org.springframework.test.context.bean.override.mockito.MockitoBean;  // 鉁?Correct
 
 @SpringBootTest
 class MyTest {
@@ -878,31 +869,30 @@ class MyTest {
 
 #### When to Migrate
 
-- **Now:** For new Spring Boot 4 projects, use `@MockitoBean` from the start
+- **Now:** For new Spring Boot 3 projects, use `@MockitoBean` from the start
 - **Gradually:** For existing projects, you can temporarily use `@SuppressWarnings("removal")` but plan migration
 - **Soon:** Spring Boot will remove `@MockBean`/`@SpyBean` support in a future release
 
 #### Full Import Statements
 
 ```java
-// Spring Boot 4 correct imports:
+// Spring Boot 3 correct imports:
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 // Deprecated (will be removed):
-import org.springframework.boot.test.mock.mockito.MockBean;  // ❌
-import org.springframework.boot.test.mock.mockito.SpyBean;   // ❌
-```
+import org.springframework.boot.test.mock.mockito.MockBean;  // 鉂?import org.springframework.boot.test.mock.mockito.SpyBean;   // 鉂?```
 
-### TestContainers 2.0 Requirements
+### Testcontainers 1.x Notes
 
-Spring Boot 4 requires **TestContainers 2.0+**, which brings:
-- **Artifact rename:** `org.testcontainers:postgresql` → `org.testcontainers:testcontainers-postgresql`
-- **Package rename:** `org.testcontainers.containers.PostgreSQLContainer` → `org.testcontainers.postgresql.PostgreSQLContainer`
-- **`PostgreSQLContainer` is no longer generic** — use `PostgreSQLContainer` (not `PostgreSQLContainer<?>`)
-- `junit-jupiter` artifact removed — TC 2.x integrates with JUnit 5 directly
-- Improved performance and resource management
-- Better cleanup of containers
-- Enhanced Docker platform support
-- Simplified configuration with `@ServiceConnection`
+Spring Boot 3 manages **Testcontainers 1.19+** (1.21.x in the current 3.5.x line).
+Key points for this project:
+
+- Use `org.testcontainers.containers.MySQLContainer<?>` 鈥?in Testcontainers 1.x the
+  container classes are generic and live in `org.testcontainers.containers`.
+- The BOM artifact is `org.testcontainers:mysql`; the `junit-jupiter` module is
+  required separately in 1.x, though Spring Boot's BOM already wires it for you.
+- `@ServiceConnection` (from `spring-boot-testcontainers`) removes the need for
+  manual `@DynamicPropertySource` wiring.
+- Pin the image tag (for example `mysql:8.3.0`) so integration tests are reproducible.
 - [AssertJ Documentation](https://assertj.github.io/doc/)

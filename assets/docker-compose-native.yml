@@ -1,20 +1,22 @@
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:18-alpine
+  # MySQL Database
+  mysql:
+    image: mysql:8.3.0
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-user}
-      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-password}
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME:-user}
+      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - postgres-data-native:/var/lib/postgresql
+      - mysql-data-native:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -36,14 +38,14 @@ services:
         NPM_CONFIG_REGISTRY: ${NPM_CONFIG_REGISTRY:-https://registry.npmjs.org}
     environment:
       SPRING_BOOT_PORT: ${SPRING_BOOT_PORT:-8080}
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mydb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:8.3.0/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-user}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-password}
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
     ports:
       - "${SPRING_BOOT_PORT:-8080}:${SPRING_BOOT_PORT:-8080}"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     # No app healthcheck: the native image runs on a distroless base with no shell,
     # curl or wget to run an in-container probe. Probe /actuator/health from outside
@@ -58,7 +60,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres-data-native:
+  mysql-data-native:
     driver: local
 
 networks:

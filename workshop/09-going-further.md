@@ -1,9 +1,9 @@
-# 09 — Going further
+﻿# 09 鈥?Going further
 
 **In this chapter:**
 - A **menu of next steps** to take the Todo app beyond the workshop
 - Each item is a short prompt you can drop into Copilot CLI
-- Pick two or three that interest you — don't try to do them all
+- Pick two or three that interest you 鈥?don't try to do them all
 
 The goal isn't to finish every idea below. It's to leave the workshop with a clear sense of *what's possible* and the muscle memory to pursue any of it on your own.
 
@@ -88,7 +88,7 @@ add/edit/remove todos, hardcoded users (julien/alice/bob), per-user filter,
 Bootstrap styling, toasts, loading spinners.
 ```
 
-Side-by-side, you'll feel the differences between the frameworks — and see that the Spring Boot backend is almost identical.
+Side-by-side, you'll feel the differences between the frameworks 鈥?and see that the Spring Boot backend is almost identical.
 
 See [`references/REACT.md`](../references/REACT.md), [`references/ANGULAR.md`](../references/ANGULAR.md), [`references/VANILLA-JS.md`](../references/VANILLA-JS.md).
 
@@ -109,14 +109,14 @@ Use Dr JSkill to create a Bookmark Manager.
 - Entities: Bookmark (url, title, description, tags, read/unread).
 - Tag filtering and full-text search on title+description.
 - Vue + Bootstrap UI.
-- PostgreSQL, no security.
+- MySQL, no security.
 ```
 
 Running the whole workshop on a second domain in under an hour is the real proof that you've internalized the workflow.
 
 ## 6. Turn the skill into yours
 
-If Dr JSkill's conventions don't match yours exactly — maybe you prefer Gradle, or H2 for dev, or a different package layout — **fork the skill and edit it**.
+If Dr JSkill's conventions don't match yours exactly 鈥?maybe you prefer Gradle, or H2 for dev, or a different package layout 鈥?**fork the skill and edit it**.
 
 The whole skill is Markdown files in [`../references/`](../references/) and [`../SKILL.md`](../SKILL.md). Change a few sentences, bump a version in [`../versions.json`](../versions.json), and the next project the agent generates will follow your conventions instead. No plugin system, no build step.
 
@@ -134,7 +134,7 @@ See the skill's own [README](../README.md) for how to point Copilot CLI at your 
 
 The single best way to cement what you learned: **run this workshop for someone else**. Pair with a colleague. Stream it. Talk at a meetup.
 
-You'll find the rough edges faster than on your own, and you'll discover which prompts actually land — and which need rephrasing. If you find improvements, PRs to [`workshop/`](../workshop) are welcome.
+You'll find the rough edges faster than on your own, and you'll discover which prompts actually land 鈥?and which need rephrasing. If you find improvements, PRs to [`workshop/`](../workshop) are welcome.
 
 ---
 
@@ -145,11 +145,11 @@ You'll find the rough edges faster than on your own, and you'll discover which p
 | Database tuning, pagination, caching | [`references/DATABASE.md`](../references/DATABASE.md) |
 | Authentication, CSRF, security headers | [`references/SECURITY.md`](../references/SECURITY.md) |
 | Structured logging, correlation IDs | [`references/LOGGING.md`](../references/LOGGING.md) |
-| Spring Boot 4 migration, virtual threads, performance | [`references/SPRING-BOOT-4.md`](../references/SPRING-BOOT-4.md) |
+| Spring Boot 3 migration, virtual threads, performance | [`references/SPRING-BOOT-3.md`](../references/SPRING-BOOT-3.md) |
 | Configuration, profiles, secrets | [`references/CONFIGURATION.md`](../references/CONFIGURATION.md) |
 | Docker production image, compose, native | [`references/DOCKER.md`](../references/DOCKER.md) |
 | GraalVM native image | [`references/GRAALVM.md`](../references/GRAALVM.md) |
-| Azure deployment (Container Apps + Postgres Flexible Server) | [`references/AZURE.md`](../references/AZURE.md) |
+| Azure deployment (Container Apps + MySQL Flexible Server) | [`references/AZURE.md`](../references/AZURE.md) |
 | Testing (unit, integration, Testcontainers) | [`references/TEST.md`](../references/TEST.md) |
 | Vue / React / Angular / Vanilla front-end guides | [`references/VUE.md`](../references/VUE.md), [`references/REACT.md`](../references/REACT.md), [`references/ANGULAR.md`](../references/ANGULAR.md), [`references/VANILLA-JS.md`](../references/VANILLA-JS.md) |
 | Java code intelligence with JDTLS | [`references/JDTLS.md`](../references/JDTLS.md) |
@@ -166,5 +166,5 @@ You've reached the end of the workshop.
 - You know where to go for anything deeper
 
 **Appendices:**
-- [A — Prompt cheat sheet](appendix-a-prompts.md)
-- [B — Troubleshooting](appendix-b-troubleshooting.md)
+- [A 鈥?Prompt cheat sheet](appendix-a-prompts.md)
+- [B 鈥?Troubleshooting](appendix-b-troubleshooting.md)

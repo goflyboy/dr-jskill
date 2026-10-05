@@ -5,7 +5,7 @@
 - Run the whole stack (app + database) with **Docker Compose**, and understand the Dockerfile in depth
 - Build a **GraalVM native image**, time the startup difference, and compare image sizes
 - Set production-safe configuration
-- *(Optional)* **Deploy to Azure Container Apps** with a managed PostgreSQL database
+- *(Optional)* **Deploy to Azure Container Apps** with a managed MySQL database
 
 This is a tour, not a full DevOps module. By the end, you'll have run your app three different ways and know how to take it to a real cloud.
 
@@ -26,11 +26,11 @@ ls target/*.jar
 # target/todo-app-0.0.1-SNAPSHOT.jar
 ```
 
-You can run this JAR anywhere Java 25 is installed — no Maven, no Node, nothing else:
+You can run this JAR anywhere Java 21 is installed — no Maven, no Node, nothing else:
 
 ```bash
-# Start Postgres first (compose.yaml still works standalone)
-docker compose -f compose.yaml up -d postgres
+# Start MySQL first (compose.yaml still works standalone)
+docker compose -f compose.yaml up -d mysql
 
 # Run the JAR
 java -jar target/todo-app-0.0.1-SNAPSHOT.jar
@@ -54,7 +54,7 @@ The JAR is portable, but in production you usually want the app itself container
 # Build the app image
 docker compose -f docker-compose.yml build
 
-# Start everything (app + postgres)
+# Start everything (app + mysql)
 docker compose -f docker-compose.yml up -d
 
 # Check logs
@@ -253,7 +253,7 @@ Review and commit.
 
 ## 5. A word on secrets
 
-You've been running with hardcoded `user` / `password` for Postgres. That's fine for development but not for anything else.
+You've been running with hardcoded `user` / `password` for MySQL. That's fine for development but not for anything else.
 
 - Never commit passwords. `.gitignore` already excludes `.env`, but double-check before pushing.
 - Use environment variables in production (the generated properties already read from `${SPRING_DATASOURCE_PASSWORD:...}`).
@@ -273,9 +273,9 @@ See [`references/CONFIGURATION.md`](../references/CONFIGURATION.md) and [`refere
 >
 > This section creates billable Azure resources. The cheapest configuration costs roughly **$0.02–0.05/hour** while running. Delete the resource group afterwards to stop all charges.
 
-You have a working Docker image. The skill's reference file [`references/AZURE.md`](../references/AZURE.md) contains a complete, production-grade deployment recipe for **Azure Container Apps** — HTTPS by default, scale-to-zero, rolling deployments, and optional VNET-injected PostgreSQL with the DB password stored as a Container Apps secret.
+You have a working Docker image. The skill's reference file [`references/AZURE.md`](../references/AZURE.md) contains a complete, production-grade deployment recipe for **Azure Container Apps** — HTTPS by default, scale-to-zero, rolling deployments, and optional VNET-injected MySQL with the DB password stored as a Container Apps secret.
 
-Rather than copy-pasting every command by hand, let the agent drive it. Start with the quick start (app only, no database) to get a public URL in a few minutes, then add PostgreSQL if you want persistence.
+Rather than copy-pasting every command by hand, let the agent drive it. Start with the quick start (app only, no database) to get a public URL in a few minutes, then add MySQL if you want persistence.
 
 ### Quick start — app only
 
@@ -299,10 +299,10 @@ curl https://<YOUR_APP_FQDN>/actuator/health
 
 Open the URL in a browser — your Todo app is live with TLS managed by Azure.
 
-### Add a PostgreSQL database
+### Add a MySQL database
 
 ```
-Use Dr JSkill to add a managed PostgreSQL database to my existing Azure
+Use Dr JSkill to add a managed MySQL database to my existing Azure
 deployment, via the VNET-injected path.
 
 Use the RESOURCE_GROUP, LOCATION, APP_NAME, CONTAINER_APP_ENV, and
@@ -310,7 +310,7 @@ CONTAINER_APP_NAME values from the previous deployment. Walk me through one
 section at a time and confirm before running anything destructive.
 ```
 
-The agent will create a VNET, a private PostgreSQL Flexible Server, and store the database password as a Container Apps secret — no credentials committed to source code.
+The agent will create a VNET, a private Azure Database for MySQL Flexible Server, and store the database password as a Container Apps secret — no credentials committed to source code.
 
 ### Deploy the native image instead
 

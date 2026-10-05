@@ -30,7 +30,7 @@ const bootVersion = flags.bootVersion || await resolveBootVersion();
 const outputDir = resolveOutputDir(flags);
 let projectDir;
 
-let dependencies = 'web,data-jpa,actuator,validation,devtools,postgresql,docker-compose,testcontainers,native';
+let dependencies = 'web,data-jpa,actuator,validation,devtools,mysql,docker-compose,testcontainers,native';
 
 console.log(`Creating full-stack Spring Boot application with Boot=${bootVersion}, Java=${javaVersion}`);
 
@@ -61,11 +61,11 @@ console.log('Includes:');
 console.log('  - Spring Web (REST APIs)');
 console.log('  - Spring Data JPA (Database access)');
 console.log('  - Spring Boot Actuator (Monitoring)');
-console.log('  - PostgreSQL Driver (Database)');
+console.log('  - MySQL Driver (Database)');
 console.log('  - Validation (Bean validation)');
 console.log('  - DevTools (Hot reload)');
 console.log('  - Docker Compose (Automatic database startup)');
-console.log('  - Testcontainers (Integration testing with PostgreSQL)');
+console.log('  - Testcontainers (Integration testing with MySQL)');
 console.log('');
 console.log('Next steps:');
 console.log(`  cd ${projectDir}`);

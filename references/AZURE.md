@@ -1,7 +1,7 @@
 # Azure Deployment Guide for Spring Boot Applications
 
 Deploy generated Spring Boot apps to **Azure Container Apps** with optional
-**Azure Database for PostgreSQL Flexible Server**, using **Azure CLI only** —
+**Azure Database for Azure Database for MySQL Flexible Server**, using **Azure CLI only** —
 no Terraform, no Bicep, no Buildpacks. Works with the standard Dockerfile the
 skill generates (`assets/Dockerfile`) and the GraalVM native image Dockerfile
 (`assets/Dockerfile-native`).
@@ -11,8 +11,8 @@ skill generates (`assets/Dockerfile`) and the GraalVM native image Dockerfile
 <!-- versions:start -->
 | Tool | Version |
 |------|---------|
-| PostgreSQL | 18 |
-| Java (Temurin) | 25 |
+| MySQL | 8.3.0 |
+| Java (Temurin) | 21 |
 <!-- versions:end -->
 
 Run `node scripts/sync-versions-in-docs.mjs` at the repo root to keep this
@@ -22,7 +22,7 @@ table aligned with `versions.json`.
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Quick Start (no database)](#quick-start-no-database)
-- [With PostgreSQL (VNET-injected)](#with-postgresql-vnet-injected)
+- [With MySQL (VNET-injected)](#with-mysql-vnet-injected)
 - [Deploy the native image](#deploy-the-native-image)
 - [CI/CD with GitHub Actions (OIDC, no secrets)](#cicd-with-github-actions-oidc-no-secrets)
 - [Day-2 operations](#day-2-operations)
@@ -37,7 +37,7 @@ Core components:
 
 - **Azure Container Apps** — serverless container platform, HTTPS by default, scale-to-zero.
 - **GitHub Container Registry (GHCR)** — image registry at `ghcr.io`; Container Apps pulls using a long-lived GitHub PAT stored as a Container Apps secret (no Azure resource to create or pay for).
-- **Azure Database for PostgreSQL Flexible Server** *(optional)* — VNET-injected; **database password stored as a Container Apps secret** and injected into the app via `secretref`.
+- **Azure Database for Azure Database for MySQL Flexible Server** *(optional)* — VNET-injected; **database password stored as a Container Apps secret** and injected into the app via `secretref`.
 - **Azure CLI** only — no Terraform/Bicep/Buildpacks.
 
 Why this shape:
@@ -61,13 +61,13 @@ az login
 az account set --subscription "YOUR_SUBSCRIPTION_ID"
 
 # Extensions / providers — these MUST be in `Registered` state before
-# creating Container Apps / LAW / Postgres resources. `--wait` blocks until
+# creating Container Apps / LAW / MySQL resources. `--wait` blocks until
 # registration completes (takes 1–2 min on a fresh subscription).
 az extension add --name containerapp --upgrade
 az extension add --name log-analytics --upgrade   # needed to read job logs
 az provider register --namespace Microsoft.App                    --wait
 az provider register --namespace Microsoft.OperationalInsights    --wait
-az provider register --namespace Microsoft.DBforPostgreSQL        --wait
+az provider register --namespace Microsoft.DBforMySQL        --wait
 ```
 
 > ⚠️ If `Microsoft.OperationalInsights` is not `Registered`, `az containerapp
@@ -99,9 +99,9 @@ Ask the user for:
 | Variable | What to ask | Default to suggest |
 |---|---|---|
 | `RESOURCE_GROUP` | Name of the Azure resource group. Existing? Create new? | `<app>-rg` |
-| `LOCATION` | Azure region (e.g. `eastus`, `westeurope`, `francecentral`). Must support Container Apps **and** PostgreSQL Flexible Server in the same region. | `eastus` |
+| `LOCATION` | Azure region (e.g. `eastus`, `westeurope`, `francecentral`). Must support Container Apps **and** Azure Database for MySQL Flexible Server in the same region. | `eastus` |
 | `APP_NAME` | Short lowercase app name, 3–20 chars, used as a prefix for every resource. | derived from the Maven `artifactId` |
-| Include a database? | Yes → run the "With PostgreSQL" section. No → stop after Quick Start. | ask |
+| Include a database? | Yes → run the "With MySQL" section. No → stop after Quick Start. | ask |
 | Use native image? | Yes → use `Dockerfile-native`, smaller/faster, slower to build. | No |
 | Set up CI/CD? | Yes → run the GitHub Actions OIDC section at the end. | ask |
 
@@ -120,16 +120,16 @@ different name. Do not silently `az group create` on top of an existing RG.
 
 ### Region preflight (mandatory)
 
-Some subscriptions are **silently restricted** from creating PostgreSQL
+Some subscriptions are **silently restricted** from creating MySQL
 Flexible Server in certain regions (commonly `westeurope`). The error only
 surfaces after you've created the RG, VNET, and identity — forcing a
 full tear-down. Always run this check **before** creating any resource:
 
 ```bash
-PG_SKUS=$(az postgres flexible-server list-skus --location "$LOCATION" \
+PG_SKUS=$(az mysql flexible-server list-skus --location "$LOCATION" \
   --query 'length([])' -o tsv 2>/dev/null)
 if [ "${PG_SKUS:-0}" = "0" ]; then
-  echo "ERROR: PostgreSQL Flexible Server is not available in $LOCATION for this subscription."
+  echo "ERROR: Azure Database for MySQL Flexible Server is not available in $LOCATION for this subscription."
   echo "Try one of: francecentral, northeurope, eastus, eastus2, westus3, uksouth."
   exit 1
 fi
@@ -318,9 +318,9 @@ APP_URL="https://$(az containerapp show \
 curl "$APP_URL/actuator/health"     # {"status":"UP"}
 ```
 
-## With PostgreSQL (VNET-injected)
+## With MySQL (VNET-injected)
 
-Adds a managed PostgreSQL Flexible Server, VNET-integrates both the database
+Adds a managed Azure Database for MySQL Flexible Server, VNET-integrates both the database
 and Container Apps, and stores the DB password as a **Container Apps secret**
 injected into the app via `secretref`. The password never appears in source
 control or env-var listings.
@@ -351,14 +351,14 @@ az network vnet subnet create \
 az network vnet subnet create \
   --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
   --name "$SUBNET_DB" --address-prefixes 10.0.2.0/24 \
-  --delegations Microsoft.DBforPostgreSQL/flexibleServers
+  --delegations Microsoft.DBforMySQL/flexibleServers
 
 SUBNET_APP_ID=$(az network vnet subnet show \
   --resource-group "$RESOURCE_GROUP" --vnet-name "$VNET_NAME" \
   --name "$SUBNET_APP" --query id -o tsv)
 ```
 
-### 3. PostgreSQL Flexible Server (private, password auth)
+### 3. Azure Database for MySQL Flexible Server (private, password auth)
 
 Generate the DB password into a shell variable and create the server in one go.
 The password is also passed to the Container Apps secret in step 5, then unset.
@@ -367,7 +367,7 @@ The password is also passed to the Container Apps secret in step 5, then unset.
 # Generate password. It lives only in memory for the duration of this session.
 DB_ADMIN_PASSWORD=$(openssl rand -base64 24)
 
-az postgres flexible-server create \
+az mysql flexible-server create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$DB_SERVER_NAME" \
   --location "$LOCATION" \
@@ -385,27 +385,27 @@ az postgres flexible-server create \
 # Keep $DB_ADMIN_PASSWORD in memory — it is needed again in step 5 to set the
 # Container Apps secret. It will be unset after that step.
 
-az postgres flexible-server parameter set \
+az mysql flexible-server parameter set \
   --resource-group "$RESOURCE_GROUP" \
   --server-name "$DB_SERVER_NAME" \
   --name azure.extensions --value "uuid-ossp"
 
-az postgres flexible-server db create \
+az mysql flexible-server db create \
   --resource-group "$RESOURCE_GROUP" \
   --server-name "$DB_SERVER_NAME" \
   --database-name "$DB_NAME"
 
-DB_HOST=$(az postgres flexible-server show \
+DB_HOST=$(az mysql flexible-server show \
   --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME" \
   --query fullyQualifiedDomainName -o tsv)
 
-# Verify the private DNS zone is linked to the VNET. Current `az postgres
+# Verify the private DNS zone is linked to the VNET. Current `az mysql
 # flexible-server create --vnet/--subnet` auto-creates BOTH the zone
-# `<dbname>.private.postgres.database.azure.com` AND a VNET link for the
+# `<dbname>.private.mysql.database.azure.com` AND a VNET link for the
 # target VNET. Older CLI versions used to leave `VirtualNetworkLinks = 0`,
 # which produced NXDOMAIN from inside the VNET. This block is idempotent:
 # it lists the links, and creates one only if none exist.
-DNS_ZONE="${DB_SERVER_NAME}.private.postgres.database.azure.com"
+DNS_ZONE="${DB_SERVER_NAME}.private.mysql.database.azure.com"
 LINK_COUNT=$(az network private-dns link vnet list \
   -g "$RESOURCE_GROUP" --zone-name "$DNS_ZONE" --query "length(@)" -o tsv)
 if [ "${LINK_COUNT:-0}" -eq 0 ]; then
@@ -455,7 +455,7 @@ is needed.
 
 ```bash
 # Standard JDBC URL — no Azure-specific plugin.
-DB_URL="jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}?sslmode=require"
+DB_URL="jdbc:mysql://${DB_HOST}:3306/${DB_NAME}?sslmode=require"
 
 az containerapp create \
   --name "$CONTAINER_APP_NAME" \
@@ -491,7 +491,7 @@ unset DB_ADMIN_PASSWORD
 
 > **About using the admin user directly.** For simplicity the app logs in as
 > the PG admin. This is fine for demos and single-app deployments. For
-> least-privilege, create a dedicated role — one `psql` session is enough:
+> least-privilege, create a dedicated role — one `mysql` session is enough:
 > ```sql
 > CREATE USER app WITH PASSWORD '...';
 > GRANT CONNECT ON DATABASE appdb TO app;
@@ -501,10 +501,10 @@ unset DB_ADMIN_PASSWORD
 > ```
 > Store `app`'s password as a second Container Apps secret and point
 > `SPRING_DATASOURCE_USERNAME/PASSWORD` at it. Because the server is private,
-> run this via a Container Apps Job: spin up a one-shot `postgres:18-alpine`
+> run this via a Container Apps Job: spin up a one-shot `mysql:8.3.0`
 > container in the same VNET, with `PGPASSWORD` set from a `secretref` to
 > the admin password, and pipe the `CREATE USER` / `GRANT` statements to
-> `psql`.
+> `mysql`.
 
 ### Password rotation
 
@@ -520,7 +520,7 @@ az containerapp secret set \
   --resource-group "$RESOURCE_GROUP" \
   --secrets "db-password=$NEW_PASSWORD"
 
-az postgres flexible-server update \
+az mysql flexible-server update \
   --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME" \
   --admin-password "$NEW_PASSWORD"
 
@@ -564,7 +564,7 @@ curl "$APP_URL/actuator/health/readiness"  # {"status":"UP"}
 ```
 
 > **Readiness depends on the DB.** With `db` in the default readiness group,
-> the pod will stay `NotReady` if PostgreSQL is unreachable — exactly what you
+> the pod will stay `NotReady` if MySQL is unreachable — exactly what you
 > want. If you'd rather keep DB health separate from readiness, set
 > `management.endpoint.health.group.readiness.include=readinessState` (drops
 > `db` from the readiness group).
@@ -741,10 +741,10 @@ az containerapp update \
 ### Database backups
 
 ```bash
-az postgres flexible-server backup list \
+az mysql flexible-server backup list \
   --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME" -o table
 
-az postgres flexible-server restore \
+az mysql flexible-server restore \
   --resource-group "$RESOURCE_GROUP" \
   --name "${DB_SERVER_NAME}-restored" \
   --source-server "$DB_SERVER_NAME" \
@@ -757,8 +757,8 @@ az postgres flexible-server restore \
   cold-start pain.
 - Stop the Flexible Server when not in use:
   ```bash
-  az postgres flexible-server stop  --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME"
-  az postgres flexible-server start --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME"
+  az mysql flexible-server stop  --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME"
+  az mysql flexible-server start --resource-group "$RESOURCE_GROUP" --name "$DB_SERVER_NAME"
   ```
 - Burstable `Standard_B1ms` is the cheapest PG tier suitable for dev.
 - Set a **budget alert** on the resource group in the Azure Portal.
@@ -780,7 +780,7 @@ az containerapp show --name "$CONTAINER_APP_NAME" \
   --query "properties.template.containers[0].env" -o json
 
 # Database status
-az postgres flexible-server show --resource-group "$RESOURCE_GROUP" \
+az mysql flexible-server show --resource-group "$RESOURCE_GROUP" \
   --name "$DB_SERVER_NAME" --query state -o tsv
 ```
 
@@ -791,11 +791,11 @@ Common failures:
 | `ImagePullBackOff` / `UNAUTHORIZED` from GHCR | Container Apps missing valid GHCR credentials; re-run the initial setup to store a `read:packages` PAT as a secret, or make the GitHub Package public. |
 | App stuck in `Activating`, readiness probe failing | Actuator not exposed, or `management.endpoints.web.exposure.include` missing `health`. |
 | `SSL required` from PG driver | `sslmode=require` missing from JDBC URL. |
-| DNS resolution failure from inside the VNET (`could not translate host name "<db>.postgres.database.azure.com"`) | Private DNS zone exists but has zero VNET links. Current CLI auto-creates the link in step 4, but older versions leave `VirtualNetworkLinks = 0` — run `az network private-dns link vnet create` (the idempotent block in step 4 handles both cases). |
+| DNS resolution failure from inside the VNET (`could not translate host name "<db>.mysql.database.azure.com"`) | Private DNS zone exists but has zero VNET links. Current CLI auto-creates the link in step 4, but older versions leave `VirtualNetworkLinks = 0` — run `az network private-dns link vnet create` (the idempotent block in step 4 handles both cases). |
 | `InvalidApiVersionParameter: The api-version '2021-12-01-preview' is invalid` on `containerapp env create` | The containerapp CLI extension tries to auto-provision a Log Analytics workspace using an outdated API version. Create the workspace explicitly with `az monitor log-analytics workspace create` and pass `--logs-workspace-id` / `--logs-workspace-key` to `containerapp env create` (as shown in steps 2 and 5). |
 | `SubnetIsNotDelegatedToContainerApps` on env create | The app subnet was not delegated. Add `--delegations Microsoft.App/environments` at subnet creation, or update it afterwards. |
 | `ResourceNotFound` for auto-created Log Analytics workspace | `Microsoft.OperationalInsights` provider not registered. Re-run `az provider register --namespace Microsoft.OperationalInsights --wait`. |
-| `PostgreSQL SKU not available in <region>` / `The location is restricted` | Region silently has zero PG Flex SKUs for your sub. Run the region preflight (top of Prerequisites) and pick another region. |
+| `MySQL SKU not available in <region>` / `The location is restricted` | Region silently has zero PG Flex SKUs for your sub. Run the region preflight (top of Prerequisites) and pick another region. |
 | `az ... -o table` errors out ("ValidationError: Table output unavailable") on stateful operations | Stateful calls don't always return a table-formattable body. Use `-o json` or `-o none`. The operation may still have succeeded — verify with a follow-up `show`. |
 | `JAVA_OPTS` seemingly ignored | Expected — use `JAVA_TOOL_OPTIONS`. |
 
@@ -811,7 +811,7 @@ Individual resources:
 ```bash
 az containerapp delete       --name "$CONTAINER_APP_NAME" --resource-group "$RESOURCE_GROUP" --yes
 az containerapp env delete   --name "$CONTAINER_APP_ENV"  --resource-group "$RESOURCE_GROUP" --yes
-az postgres flexible-server delete --name "$DB_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --yes
+az mysql flexible-server delete --name "$DB_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --yes
 ```
 
 ### Tenant-scoped artifacts (not in the resource group)

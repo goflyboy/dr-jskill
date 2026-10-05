@@ -15,7 +15,7 @@ design language. Each tool owns a color, and together they cover the full lifecy
 The three tools chain together from an empty folder to a running, observable application:
 
 1. **Generate with Dr JSkill.** Ask GitHub Copilot CLI (or Claude Code) to create an application. Dr JSkill
-   teaches the agent how to scaffold a Spring Boot 4 + Java 25 project with PostgreSQL, a REST API, your chosen
+   teaches the agent how to scaffold a Spring Boot 3 + Java 21 project with MySQL, a REST API, your chosen
    front-end, Docker, and production-ready defaults. → [Read the skill](https://github.com/jdubois/dr-jskill/blob/main/SKILL.md)
 
 2. **Add the BootUI console.** Drop in the **[BootUI](https://www.julien-dubois.com/boot-ui/)** Spring Boot

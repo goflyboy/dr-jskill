@@ -81,21 +81,21 @@ Restart your Copilot CLI session after cloning.
 
 ## Generation / first run (Chapter 2)
 
-### `./mvnw spring-boot:run` fails with `Port 5432 is already in use`
+### `./mvnw spring-boot:run` fails with `Port 3306 is already in use`
 
-**Cause:** another Postgres is already running on 5432 (Homebrew service, another Docker container, previous workshop attempt).
+**Cause:** another MySQL is already running on 3306 (Homebrew service, another Docker container, previous workshop attempt).
 
 **Fix:**
 ```bash
 # macOS (Homebrew service)
-brew services stop postgresql
+brew services stop mysql
 
 # Any OS: list and stop stray containers
 docker ps
 docker stop <container-id>
 ```
 
-Or change the port in `compose.yaml` (`"15432:5432"`) and the datasource URL accordingly.
+Or change the port in `compose.yaml` (`"15432:3306"`) and the datasource URL accordingly.
 
 ### `./mvnw` fails with `No such file or directory`
 
@@ -198,17 +198,17 @@ Run `git status`. If it's clean, the agent may have hit a silent error. Ask: *"S
 
 ### `./mvnw verify` fails with `Failed to start application`
 
-**Cause:** usually a Postgres connection error (container not up, credentials changed).
+**Cause:** usually a MySQL connection error (container not up, credentials changed).
 
 **Fix:**
 ```bash
-docker compose -f compose.yaml ps           # is postgres running?
-docker compose -f compose.yaml logs postgres | tail -30
+docker compose -f compose.yaml ps           # is mysql running?
+docker compose -f compose.yaml logs mysql | tail -30
 ```
 
 Compare `spring.datasource.*` in `application.properties` against `compose.yaml`.
 
-### Testcontainers can't pull the Postgres image
+### Testcontainers can't pull the MySQL image
 
 **Cause:** rate limits on Docker Hub, or no internet.
 
@@ -378,7 +378,7 @@ If a name you listed is missing from that output, exposure wasn't the problem �
 
 ### A POST returns 400 and the log says "Cannot map `null` into type `boolean`"
 
-**Cause:** Jackson 3 (Spring Boot 4) enables `FAIL_ON_NULL_FOR_PRIMITIVES` by default, so omitting a primitive field from the JSON body — `{"title":"Buy milk"}` with no `"completed"` — is an error rather than a fall-back to `false`.
+**Cause:** Jackson 3 (Spring Boot 3) enables `FAIL_ON_NULL_FOR_PRIMITIVES` by default, so omitting a primitive field from the JSON body — `{"title":"Buy milk"}` with no `"completed"` — is an error rather than a fall-back to `false`.
 
 **Fix:** generated projects already set this in `application.properties`. If yours doesn't, add it (and repeat it in `src/test/resources/application.properties`, which shadows the main file on the test classpath):
 

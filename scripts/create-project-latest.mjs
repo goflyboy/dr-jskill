@@ -16,7 +16,8 @@ function usage() {
   console.log(`Usage: node create-project-latest.mjs [PROJECT_NAME] [GROUP_ID] [ARTIFACT_ID] [PACKAGE_NAME] [JAVA_VERSION] [PROJECT_TYPE]
 
 Environment / Flags:
-  --boot-version <version>   Override Spring Boot version (otherwise resolves preferred major with fallback)
+  --boot-version <version>   Override Spring Boot version (otherwise resolves the highest stable
+                             release matching springBootPreferredMajor from Maven Central)
   --project-type <type>      basic | web | fullstack (default: web)
   --frontend <type>          none | react | angular | vue | vanilla (default: none for web/basic, vue for fullstack)
                              When set to a framework, keeps the COPY frontend ./frontend line in Dockerfile(s)
@@ -26,8 +27,8 @@ Environment / Flags:
 
 Examples:
   node scripts/create-project-latest.mjs myapp com.acme myapp com.acme.myapp 21 fullstack
-  node scripts/create-project-latest.mjs --boot-version 4.0.0-M1 myapp
-  node scripts/create-project-latest.mjs --output-dir /path/to/workspace --frontend react myapp com.acme myapp com.acme.myapp 25 web`);
+  node scripts/create-project-latest.mjs --boot-version 3.3.5 myapp com.acme myapp com.acme.myapp 21 web
+  node scripts/create-project-latest.mjs --output-dir /path/to/workspace --frontend react myapp com.acme myapp com.acme.myapp 21 web`);
 }
 
 const { flags, positional } = parseArgs(process.argv);
@@ -64,7 +65,7 @@ switch (projectType) {
     description = 'Spring+Boot+web+application';
     break;
   case 'fullstack':
-    dependencies = 'web,data-jpa,actuator,validation,devtools,postgresql,docker-compose,testcontainers,native';
+    dependencies = 'web,data-jpa,actuator,validation,devtools,mysql,docker-compose,testcontainers,native';
     description = 'Full-stack+Spring+Boot+application';
     break;
   default:

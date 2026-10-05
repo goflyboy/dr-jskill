@@ -19,7 +19,7 @@
 - [References](#references)
 
 ## Overview
-This guide covers Spring Security configuration for Spring Boot 4 applications. Spring Security is **optional** - only include it when you need authentication and authorization. This guide provides best practices for common security scenarios.
+This guide covers Spring Security configuration for Spring Boot 3 applications. Spring Security is **optional** - only include it when you need authentication and authorization. This guide provides best practices for common security scenarios.
 
 **When to Add Spring Security:**
 
@@ -37,12 +37,12 @@ This guide covers Spring Security configuration for Spring Boot 4 applications. 
 
 ## Prerequisites
 
-1. Spring Boot 4 application
+1. Spring Boot 3 application
 2. Basic understanding of authentication and authorization concepts
 3. Database for user storage (optional - can use in-memory for testing)
 
 ## Problem Details (RFC 7807)
-Enable globally in Spring Boot 4:
+Enable globally in Spring Boot 3:
 ```properties
 spring.mvc.problemdetails.enabled=true
 ```
@@ -126,7 +126,7 @@ Using generated security password: 8e557245-73e2-4286-969a-ff57fe326336
 
 ### Custom Security Configuration
 
-**For Spring Boot 4, use the new lambda DSL (method chaining is deprecated):**
+**For Spring Boot 3, use the new lambda DSL (method chaining is deprecated):**
 
 ```java
 @Configuration
@@ -160,7 +160,7 @@ public class SecurityConfig {
 
 **Key Points:**
 
-1. **Lambda DSL**: Spring Boot 4 requires lambda-based configuration
+1. **Lambda DSL**: Spring Boot 3 requires lambda-based configuration
 2. **Public Endpoints**: Use `.requestMatchers(...).permitAll()` for public access
 3. **Password Encoding**: Always use `BCryptPasswordEncoder` (never plain text)
 4. **HTTPS Only**: Use HTTPS in production (configure `server.ssl.*` properties)
@@ -808,7 +808,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 **Controller Tests:**
 
 ```java
-@WebMvcTest(UserController.class) // correct import: org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest
+@WebMvcTest(UserController.class) // import: org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 class UserControllerTest {
 
     @Autowired

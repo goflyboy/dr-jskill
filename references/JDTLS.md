@@ -35,7 +35,7 @@ For an AI agent, this means: **verify a method exists before calling it, rename 
 | Windows | Use WSL + `brew install jdtls`, or download the release and add to `PATH` |
 | mise / asdf | `mise use jdtls@latest` |
 
-Prerequisite: **Java 17+** on `PATH` (we require Java 25 anyway — see [`versions.json`](../versions.json)).
+Prerequisite: **Java 17+** on `PATH` (we require Java 21 anyway — see [`versions.json`](../versions.json)).
 
 Verify the install:
 

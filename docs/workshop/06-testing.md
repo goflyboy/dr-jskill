@@ -35,11 +35,11 @@ This proves the app starts. Useful, but tiny. Dr JSkill's convention (see [`refe
 | Style | Scope | Runs via | Speed |
 |---|---|---|---|
 | **Unit tests** with Mockito (`@WebMvcTest`, plain `@Test`) | One class in isolation, collaborators mocked | `./mvnw test` | Milliseconds |
-| **Integration tests** with Testcontainers (`@SpringBootTest` + real Postgres) | The whole app against a real DB in a container | `./mvnw verify` | Seconds |
+| **Integration tests** with Testcontainers (`@SpringBootTest` + real MySQL) | The whole app against a real DB in a container | `./mvnw verify` | Seconds |
 
 Unit tests go in `src/test/java/.../*Test.java`. Integration tests follow a `*IT.java` naming convention and are run by the Maven Failsafe plugin during the `verify` phase.
 
-> **This one already ships renamed.** The generated context test is annotated with `@Import(TestcontainersConfiguration.class)`, so it boots a real PostgreSQL container. Dr JSkill therefore generates it as `…ApplicationIT`, not `…ApplicationTests`, which puts it in the Failsafe lane: `./mvnw test` stays container-free and fast, and the smoke test still runs under `./mvnw verify`. The same rule applies to tests you add later — **anything needing a container belongs in `*IT`** (including the N+1 test in [chapter 7](07-performance.md)). Name a container-backed test `*Test` and it lands in the fast lane and drags a container in with it.
+> **This one already ships renamed.** The generated context test is annotated with `@Import(TestcontainersConfiguration.class)`, so it boots a real MySQL container. Dr JSkill therefore generates it as `…ApplicationIT`, not `…ApplicationTests`, which puts it in the Failsafe lane: `./mvnw test` stays container-free and fast, and the smoke test still runs under `./mvnw verify`. The same rule applies to tests you add later — **anything needing a container belongs in `*IT`** (including the N+1 test in [chapter 7](07-performance.md)). Name a container-backed test `*Test` and it lands in the fast lane and drags a container in with it.
 
 ## 3. Add unit tests for the controller
 
@@ -83,12 +83,12 @@ git add . && git commit -m "Add @WebMvcTest coverage for TodoController"
 
 ## 4. Add an integration test with Testcontainers
 
-Integration tests verify the **whole stack**: REST → service → repository → real PostgreSQL — no mocks.
+Integration tests verify the **whole stack**: REST → service → repository → real MySQL — no mocks.
 
 ```
 Add an integration test TodoIntegrationIT that:
 
-- Uses Testcontainers with postgres:18-alpine via @ServiceConnection
+- Uses Testcontainers with mysql:8.3.0 via @ServiceConnection
 - Creates a todo via POST, reads it back via GET, deletes it via DELETE
 - Asserts the todo is gone afterwards
 - Uses RestTestClient (Spring Framework 7) for HTTP-level assertions
@@ -100,7 +100,7 @@ Follow Dr JSkill's testing conventions.
 Review the diff. The agent should:
 
 - Place the file at `src/test/java/.../TodoIntegrationIT.java` (note the `IT` suffix)
-- Use `@Import(TestcontainersConfiguration.class)` so the same Postgres container is shared
+- Use `@Import(TestcontainersConfiguration.class)` so the same MySQL container is shared
 - Not create a new container per test
 
 ## 5. Run the full suite
@@ -115,7 +115,7 @@ This runs:
 2. Integration tests (Failsafe, `*IT.java`)
 3. Checksums and packaging
 
-First run downloads the Testcontainers Postgres image — slow. Subsequent runs reuse it if you enabled container reuse (see below).
+First run downloads the Testcontainers MySQL image — slow. Subsequent runs reuse it if you enabled container reuse (see below).
 
 ## 6. Speed up the feedback loop
 
@@ -126,7 +126,7 @@ Testcontainers can **reuse** a container across runs rather than recreating it e
 testcontainers.reuse.enable=true
 ```
 
-Next `./mvnw verify` keeps the Postgres container running in the background and reuses it. First run still pays the full startup cost; from the second onwards integration tests start in seconds.
+Next `./mvnw verify` keeps the MySQL container running in the background and reuses it. First run still pays the full startup cost; from the second onwards integration tests start in seconds.
 
 ## 7. Run a single test
 

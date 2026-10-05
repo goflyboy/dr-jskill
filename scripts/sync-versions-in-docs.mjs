@@ -36,20 +36,22 @@ const assetRewrites = [
     [/GraalVM \d+ \(includes native-image toolchain, JDK \d+\)/g, `GraalVM ${versions.graalvmVersion} (includes native-image toolchain, JDK ${versions.javaVersion})`],
     [/GraalVM \d+ = JDK \d+/g, `GraalVM ${versions.graalvmVersion} = JDK ${versions.javaVersion}`],
   ]],
+  // MySQL 8.x requires a longer start_period than Postgres: the entrypoint runs
+  // initialization on first boot, so the port can stay closed for ~20s.
   ['assets/compose.yaml', [
-    [/postgres:\d+-alpine/g, `postgres:${versions.postgresVersion}-alpine`],
+    [/mysql:\d[\d.]*/g, `mysql:${versions.mysqlVersion}`],
   ]],
   ['assets/docker-compose.yml', [
-    [/postgres:\d+-alpine/g, `postgres:${versions.postgresVersion}-alpine`],
+    [/mysql:\d[\d.]*/g, `mysql:${versions.mysqlVersion}`],
   ]],
   ['assets/docker-compose-aot.yml', [
-    [/postgres:\d+-alpine/g, `postgres:${versions.postgresVersion}-alpine`],
+    [/mysql:\d[\d.]*/g, `mysql:${versions.mysqlVersion}`],
   ]],
   ['assets/docker-compose-native.yml', [
-    [/postgres:\d+-alpine/g, `postgres:${versions.postgresVersion}-alpine`],
+    [/mysql:\d[\d.]*/g, `mysql:${versions.mysqlVersion}`],
   ]],
   ['assets/devcontainer/docker-compose.yml', [
-    [/postgres:\d+-alpine/g, `postgres:${versions.postgresVersion}-alpine`],
+    [/mysql:\d[\d.]*/g, `mysql:${versions.mysqlVersion}`],
   ]],
   ['assets/devcontainer/devcontainer.json', [
     [/("ghcr\.io\/devcontainers\/features\/java:1"\s*:\s*\{\s*"version"\s*:\s*")\d+(")/g, `$1${versions.javaVersion}$2`],
@@ -104,13 +106,13 @@ const docs = {
     ['Bootstrap', versions.bootstrapVersion],
   ],
   'references/AZURE.md': [
-    ['PostgreSQL', versions.postgresVersion],
+    ['MySQL', versions.mysqlVersion],
     ['Java (Temurin)', versions.temurinVersion],
   ],
   'references/GRAALVM.md': [
     ['GraalVM', versions.graalvmVersion],
     ['Java (Temurin)', versions.temurinVersion],
-    ['PostgreSQL', versions.postgresVersion],
+    ['MySQL', versions.mysqlVersion],
   ],
 };
 
